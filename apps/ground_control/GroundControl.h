@@ -53,7 +53,7 @@ public:
     QAbstractItemModel *ReadoutsModelPtr() { return &readoutsModel_; }
 
     bool FlightComputerLinked() const { return flightComputerLinked_; }
-    bool SimulatorLinked() const { return flightComputerLinked_ && simLinkOk_; }
+    bool SimulatorLinked() const { return simulatorDiscovered_; }
     QString CurrentModeText() const { return ModeText(mode_); }
     int CurrentModeStatus() const { return static_cast<int>(flightComputerLinked_ ? GetModeStatus(mode_) : SharedTypes::Status::stale); }
 
@@ -82,6 +82,7 @@ private:
     SharedTypes::Mode mode_ = SharedTypes::Mode::nominal;
     bool simLinkOk_ = false;
     bool flightComputerLinked_ = false;
+    bool simulatorDiscovered_ = false;
 
     static constexpr int linkCheckIntervalMilliseconds = 200;
 
