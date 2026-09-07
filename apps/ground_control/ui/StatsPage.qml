@@ -11,19 +11,23 @@ Page {
         color: "black"
     }
 
-    readonly property int readoutRowCount: Math.max(1, Math.ceil(readoutRepeater.count / 2))
+    readonly property bool portrait: height > width
+    readonly property int shortestSide: Math.min(width, height)
+    readonly property int columnCount: portrait ? 1 : 2
+    readonly property int readoutRowCount: Math.max(1, Math.ceil(readoutRepeater.count / columnCount))
     readonly property int rowHeight: Math.floor(readoutGrid.height / readoutRowCount)
     readonly property int baseFontSize: Math.round(rowHeight * 0.45)
     readonly property int cellPadding: Math.round(baseFontSize * 0.5)
-    readonly property int buttonHeight: Math.round(height * 0.1)
-    readonly property int buttonFontSize: Math.round(height * 0.05)
+    readonly property int buttonHeight: Math.round(shortestSide * 0.1)
+    readonly property int buttonFontSize: Math.round(shortestSide * 0.05)
+    readonly property real labelFraction: 0.7
 
     Grid {
         id: readoutGrid
         anchors.fill: parent
         anchors.margins: 10
         anchors.bottomMargin: statsPage.buttonHeight + 40
-        columns: 2
+        columns: statsPage.columnCount
         rowSpacing: 0
         columnSpacing: 10
 
@@ -33,14 +37,14 @@ Page {
 
             delegate: RowLayout {
                 id: readoutRow
-                width: (readoutGrid.width - readoutGrid.columnSpacing) / readoutGrid.columns
+                width: (readoutGrid.width - readoutGrid.columnSpacing * (readoutGrid.columns - 1)) / readoutGrid.columns
                 spacing: 0
                 required property string label
                 required property string value
                 required property int status
 
                 Rectangle {
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: readoutRow.width * statsPage.labelFraction
                     Layout.preferredHeight: rowHeight
                     color: "black"
                     border.color: "white"

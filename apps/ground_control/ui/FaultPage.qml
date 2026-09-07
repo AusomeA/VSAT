@@ -10,16 +10,23 @@ Page {
         color: "black"
     }
 
-    readonly property int titleFontSize: Math.round(height * .06)
-    readonly property int pageMargin: Math.round(height * .03)
-    readonly property int buttonHeight: Math.round(height * .1)
-    readonly property int buttonFontSize: Math.round(height * .05)
+    readonly property int shortestSide: Math.min(width, height)
+    readonly property int titleFontSize: Math.round(shortestSide * .06)
+    readonly property int pageMargin: Math.round(shortestSide * .03)
+    readonly property int buttonHeight: Math.round(shortestSide * .1)
+    readonly property int buttonFontSize: Math.round(shortestSide * .05)
     readonly property int faultCount: Math.max(1, faultRepeater.count)
-    readonly property int headerFontSize: Math.round(height * .04)
+    readonly property int headerFontSize: Math.round(shortestSide * .04)
     readonly property int rowHeight: Math.round((height - headerFontSize - titleFontSize - buttonHeight - pageMargin * (faultCount + 4)) / faultCount)
-    readonly property int rowFontSize: Math.round(rowHeight * 0.4)
-    readonly property int switchHeight: Math.round(Math.min(rowHeight * 0.5, width * 0.08))
-    readonly property int valueWidth: Math.round(width * .18)
+    readonly property int rowFontSize: Math.round(Math.min(rowHeight * 0.4, switchHeight * 1.2))
+    readonly property bool portrait: height > width
+    readonly property real labelFraction: portrait ? .35 : .5
+    readonly property int labelWidth: Math.round(width * labelFraction)
+    readonly property real switchFraction: .08
+    readonly property int switchHeight: Math.round(Math.min(rowHeight * .5, width * switchFraction / 2))
+    readonly property int switchColumnCount: 2
+    readonly property int valueWidth: Math.round((width - pageMargin * 2 - labelWidth - (switchHeight * 2 + pageMargin * 2) * switchColumnCount) / switchColumnCount)
+    readonly property int headerWidth: valueWidth + pageMargin + switchHeight * 2
 
     ColumnLayout {
         anchors.fill: parent
@@ -39,15 +46,19 @@ Page {
             columns: 2
             rows: faultPage.faultCount + 1
             flow: GridLayout.TopToBottom
-            columnSpacing: faultPage.pageMargin * 2
+            columnSpacing: faultPage.pageMargin
             rowSpacing: faultPage.pageMargin
 
             // ───── LEFT COLUMN: header, then one row per sensor (label + value + red switch) ─────
 
             Label {
-                text: "Inject (simulator)"
+                text: "Inject"
                 color: "gray"
                 font.pixelSize: faultPage.headerFontSize
+                fontSizeMode: Text.Fit
+                minimumPixelSize: 8
+                horizontalAlignment: Text.AlignHCenter
+                Layout.preferredWidth: faultPage.headerWidth
                 Layout.alignment: Qt.AlignRight
             }
 
@@ -59,7 +70,7 @@ Page {
                     id: faultRow
                     Layout.fillWidth: true
                     Layout.preferredHeight: faultPage.rowHeight
-                    spacing: faultPage.pageMargin * 2
+                    spacing: faultPage.pageMargin
 
                     required property int index
                     required property string label
@@ -73,8 +84,10 @@ Page {
                         fontSizeMode: Text.Fit
                         minimumPixelSize: 8
                         elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: faultPage.labelWidth
                         Layout.fillHeight: true
                     }
 
@@ -124,10 +137,15 @@ Page {
             // ───── RIGHT COLUMN: header, then one row per sensor (value + orange switch, no label) ─────
 
             Label {
-                text: "Inhibit (flight computer)"
+                text: "Inhibit"
                 color: "gray"
                 font.pixelSize: faultPage.headerFontSize
-                Layout.alignment: Qt.AlignRight
+                fontSizeMode: Text.Fit
+                minimumPixelSize: 8
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                Layout.preferredWidth: faultPage.headerWidth
+                Layout.alignment: Qt.AlignLeft
             }
 
             Repeater {
@@ -137,7 +155,7 @@ Page {
                 delegate: RowLayout {
                     id: inhibitRow
                     Layout.preferredHeight: faultPage.rowHeight
-                    spacing: faultPage.pageMargin * 2
+                    spacing: faultPage.pageMargin
 
                     required property int index
                     required property string value

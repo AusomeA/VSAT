@@ -10,13 +10,14 @@ Page {
         color: "black"
     }
 
-    readonly property int titleFontSize: Math.round(height * .06)
-    readonly property int pageMargin: Math.round(height * .03)
-    readonly property int buttonHeight: Math.round(height * 0.1)
-    readonly property int buttonFontSize: Math.round(height * 0.05)
+    readonly property int shortestSide: Math.min(width, height)
+    readonly property int titleFontSize: Math.round(shortestSide * .06)
+    readonly property int pageMargin: Math.round(shortestSide * .03)
+    readonly property int buttonHeight: Math.round(shortestSide * 0.1)
+    readonly property int buttonFontSize: Math.round(shortestSide * 0.05)
     readonly property int commandCount: Math.max(1, commandRepeater.count)
     readonly property int rowHeight: Math.round((height - titleFontSize - buttonHeight - pageMargin * (commandCount + 3)) / commandCount)
-    readonly property int rowFontSize: Math.round(rowHeight * 0.4)
+    readonly property int rowFontSize: Math.round(Math.min(rowHeight * 0.4, shortestSide * .1))
 
     ColumnLayout {
         anchors.fill: parent
@@ -46,15 +47,23 @@ Page {
                 required property int status
 
                 Button {
+                    id: commandButton
                     text: commandRow.label
                     font.pixelSize: commandPage.rowFontSize
-                    //fontSizeMode: Text.Fit
-                    //minimumPixelSize: 8
-                    //elide: Text.ElideRight
-                    //verticalAlignment: Text.AlignVCenter
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     onClicked: groundControl.SendCommand(commandRow.index)
+
+                    contentItem: Text {
+                        text: commandButton.text
+                        font: commandButton.font
+                        color: commandButton.palette.buttonText
+                        fontSizeMode: Text.Fit
+                        minimumPixelSize: 8
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
 
                 Label {

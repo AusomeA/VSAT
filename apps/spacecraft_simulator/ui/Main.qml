@@ -45,6 +45,7 @@ ApplicationWindow {
     readonly property int rowHeight: Math.floor(readoutGrid.height / readoutRowCount)
     readonly property int baseFontSize: Math.round(rowHeight * 0.45)
     readonly property int cellPadding: Math.round(baseFontSize * 0.5)
+    readonly property real labelFraction: 0.7
 
     MouseArea {
         width: 80
@@ -140,7 +141,7 @@ ApplicationWindow {
                 required property int status
 
                 Rectangle {
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: readoutRow.width * root.labelFraction
                     Layout.preferredHeight: rowHeight
                     color: "black"
                     border.color: "white"

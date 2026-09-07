@@ -26,7 +26,7 @@ Page {
             Layout.alignment: Qt.AlignHCenter
         }
 
-        RowLayout {
+        Flow {
             Layout.fillWidth: true
             spacing: homePage.pageMargin
 
