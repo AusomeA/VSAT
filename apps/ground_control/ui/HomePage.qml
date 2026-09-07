@@ -8,10 +8,11 @@ Page {
         color: "black"
     }
 
-    readonly property int titleFontSize: Math.round(height * .06)
-    readonly property int baseFontSize: Math.round(height * 0.035)
-    readonly property int buttonFontSize: Math.round(height * 0.06)
-    readonly property int pageMargin: Math.round(height * .03)
+    readonly property int shortestSide: Math.min(width, height)
+    readonly property int titleFontSize: Math.round(shortestSide * .06)
+    readonly property int baseFontSize: Math.round(shortestSide * 0.035)
+    readonly property int buttonFontSize: Math.round(shortestSide * 0.06)
+    readonly property int pageMargin: Math.round(shortestSide * .03)
 
     ColumnLayout {
         anchors.fill: parent
