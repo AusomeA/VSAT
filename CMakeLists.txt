@@ -186,6 +186,7 @@ target_include_directories(
 )
 
 ################# testing #####################
+if(NOT ANDROID)
 include(FetchContent)
 FetchContent_Declare(
     googletest
@@ -229,3 +230,4 @@ target_compile_features(
 
 include(GoogleTest)
 gtest_discover_tests(vsat_tests)
+endif()
