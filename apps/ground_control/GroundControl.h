@@ -30,11 +30,16 @@ enum FaultRowIndex
 
 enum CommandRowIndex
 {
-    forceSafeModeRow,
-    exitSafeModeRow,
     rebootRow,
     pingRow,
     commandRowCount
+};
+
+enum CommandSwitchRowIndex
+{
+    safeModeRow,
+    payloadInhibitRow,
+    commandSwitchRowCount
 };
 
 enum AdjustRowIndex
@@ -55,6 +60,7 @@ class GroundControl : public QObject
     Q_PROPERTY(int modeStatus READ CurrentModeStatus NOTIFY summaryChanged)
     Q_PROPERTY(QAbstractItemModel *faultsModel READ FaultsModelPtr CONSTANT)
     Q_PROPERTY(QAbstractItemModel *commandsModel READ CommandsModelPtr CONSTANT)
+    Q_PROPERTY(QAbstractItemModel *commandsSwitchModel READ CommandsSwitchModelPtr CONSTANT)
     Q_PROPERTY(QAbstractItemModel *inhibitsModel READ InhibitsModelPtr CONSTANT)
     Q_PROPERTY(QAbstractItemModel *adjustsModel READ AdjustsModelPtr CONSTANT)
 
@@ -73,6 +79,9 @@ public:
 
     QAbstractItemModel *CommandsModelPtr() { return &commandsModel_; }
     Q_INVOKABLE void SendCommand(int commandRow);
+
+    QAbstractItemModel *CommandsSwitchModelPtr() { return &commandsSwitchesModel_; }
+    Q_INVOKABLE void SetCommandSwitch(int switchRow, bool on);
 
     QAbstractItemModel *InhibitsModelPtr() { return &inhibitsModel_; }
     Q_INVOKABLE void SetInhibits(int faultRow, bool inhibited);
@@ -128,6 +137,10 @@ private:
     AckUdpSender groundSender_;
     QMap<qint64, int> pendingCommands_;
 
+    ReadoutsModel commandsSwitchesModel_;
+    QMap<qint64, PendingFault> pendingCommandSwitches_;
+    QMap<int, QString> switchOutcomeSuffix_;
+
     ReadoutsModel inhibitsModel_;
     AckUdpSender inhibitSender_;
     QMap<qint64, PendingFault> pendingInhibits_;
@@ -149,4 +162,10 @@ private:
     static QString AdjustName(int adjustRow, bool increase);
     void HandleAdjustAck(qint64 sequence, bool accepted);
     void HandleAdjustGaveUp(qint64 sequence);
+
+    static QString CommandSwitchName(int switchRow, bool on);
+    void HandleCommandSwitchAck(qint64 sequence, bool accepted);
+    void HandleCommandSwitchGaveUp(qint64 sequence);
+    bool SwitchPending(int switchRow) const;
+    void UpdateSafeModeSwitchRow(bool stale);
 };

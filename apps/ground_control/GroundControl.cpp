@@ -23,16 +23,19 @@ GroundControl::GroundControl(QObject *parent)
     connect(&godSender_, &AckUdpSender::GaveUp, this, &GroundControl::HandleFaultGaveUp);
 
     adjustsModel_.SetRows({{"Battery", "Ready", static_cast<int>(SharedTypes::Status::none)},
-                          {"Time Scale", "Ready", static_cast<int>(SharedTypes::Status::none)}});
+                           {"Time Scale", "Ready", static_cast<int>(SharedTypes::Status::none)}});
     connect(&godSender_, &AckUdpSender::Acknowledged, this, &GroundControl::HandleAdjustAck);
     connect(&godSender_, &AckUdpSender::GaveUp, this, &GroundControl::HandleAdjustGaveUp);
 
-    commandsModel_.SetRows({{"Exit Safe Mode", "Ready", static_cast<int>(SharedTypes::Status::none)},
-                            {"Force Safe Mode", "Ready", static_cast<int>(SharedTypes::Status::none)},
-                            {"Reboot Flight Computer", "Ready", static_cast<int>(SharedTypes::Status::none)},
+    commandsModel_.SetRows({{"Reboot Flight Computer", "Ready", static_cast<int>(SharedTypes::Status::none)},
                             {"Ping", "Ready", static_cast<int>(SharedTypes::Status::none)}});
     connect(&groundSender_, &AckUdpSender::Acknowledged, this, &GroundControl::HandleCommandAck);
     connect(&groundSender_, &AckUdpSender::GaveUp, this, &GroundControl::HandleCommandGaveUp);
+
+    commandsSwitchesModel_.SetRows({{"Safe Mode", "Off", static_cast<int>(SharedTypes::Status::none)},
+                                    {"Payload Inhibit", "Off", static_cast<int>(SharedTypes::Status::none)}});
+    connect(&groundSender_, &AckUdpSender::Acknowledged, this, &GroundControl::HandleCommandSwitchAck);
+    connect(&groundSender_, &AckUdpSender::GaveUp, this, &GroundControl::HandleCommandSwitchGaveUp);
 
     inhibitsModel_.SetRows({{"Temperature Sensor Inhibit", "Off", static_cast<int>(SharedTypes::Status::none)},
                             {"Power Sensor Inhibit", "Off", static_cast<int>(SharedTypes::Status::none)},
@@ -142,6 +145,7 @@ void GroundControl::UpdateRows(bool stale)
     readoutsModel_.UpdateRow(simulatorLinkRow, simLinkOk_ ? "Good Link" : "No Link", rowStatus(simLinkOk_ ? SharedTypes::Status::good : SharedTypes::Status::critical));
     readoutsModel_.UpdateRow(modeRow, ModeText(mode_), rowStatus(GetModeStatus(mode_)));
     UpdateTelemetryReadouts(readoutsModel_, telemetry_, gcHeaderRowCount, stale);
+    UpdateSafeModeSwitchRow(stale);
 }
 
 QString GroundControl::FaultName(int faultRow)
@@ -215,6 +219,35 @@ void GroundControl::SendCommand(int commandRow)
     cout << "Sent command " << commandName.toStdString() << endl;
 }
 
+void GroundControl::SetCommandSwitch(int switchRow, bool on)
+{
+    const QString commandName = CommandSwitchName(switchRow, on);
+    if (commandName.isEmpty())
+    {
+        qWarning() << "Unknown command switch row" << switchRow;
+        return;
+    }
+
+    const QList<QHostAddress> flightComputers = discovery_.LivePeerAddresses(SharedTypes::flightComputerName);
+    if (flightComputers.isEmpty())
+    {
+        commandsSwitchesModel_.UpdateRow(switchRow, "No Flight Computer", static_cast<int>(SharedTypes::Status::critical));
+        cout << "No flight computer to send " << commandName.toStdString() << " to" << endl;
+        return;
+    }
+
+    QJsonObject body;
+    body["command"] = commandName;
+    if (commandName == SharedTypes::inhibitPayloadCommand)
+        body["inhibited"] = on;
+
+    switchOutcomeSuffix_.remove(switchRow);
+    const qint64 sequence = groundSender_.SendAck(SharedTypes::groundCommandMessageType, body, flightComputers.first(), SharedTypes::groundCommandPort);
+    pendingCommandSwitches_[sequence] = {switchRow, on};
+    commandsSwitchesModel_.UpdateRow(switchRow, on ? "Turning On..." : "Turning Off...", static_cast<int>(SharedTypes::Status::warning));
+    cout << "Sent " << commandName.toStdString() << endl;
+}
+
 void GroundControl::SetInhibits(int faultRow, bool inhibited)
 {
     const QString faultName = FaultName(faultRow);
@@ -270,7 +303,7 @@ void GroundControl::HandleFaultGaveUp(qint64 sequence)
 void GroundControl::SendAdjust(int adjustRow, bool increase)
 {
     const QString faultName = AdjustName(adjustRow, increase);
-    if(faultName.isEmpty())
+    if (faultName.isEmpty())
     {
         qWarning() << "Unknown adjust row" << adjustRow;
         return;
@@ -278,7 +311,7 @@ void GroundControl::SendAdjust(int adjustRow, bool increase)
 
     const QList<QHostAddress> simulators = discovery_.LivePeerAddresses(SharedTypes::simulatorName);
 
-    if(simulators.isEmpty())
+    if (simulators.isEmpty())
     {
         adjustsModel_.UpdateRow(adjustRow, "No Simulator", static_cast<int>(SharedTypes::Status::critical));
         cout << "No simulator to send " << faultName.toStdString() << " to" << endl;
@@ -299,12 +332,8 @@ QString GroundControl::CommandName(int commandRow)
 {
     switch (commandRow)
     {
-    case exitSafeModeRow:
-        return SharedTypes::exitSafeModeCommand;
     case rebootRow:
         return SharedTypes::rebootCommand;
-    case forceSafeModeRow:
-        return SharedTypes::forceSafeModeCommand;
     case pingRow:
         return SharedTypes::pingCommand;
     default:
@@ -367,26 +396,29 @@ void GroundControl::HandleInhibitGaveUp(qint64 sequence)
 
 void GroundControl::ResetInhibitRows()
 {
-    for (int row = 0; row < faultRowCount; ++row)
+    for (int row = 0; row < inhibitsModel_.rowCount(); ++row)
         inhibitsModel_.UpdateRow(row, "Off", static_cast<int>(SharedTypes::Status::none));
+
+    commandsSwitchesModel_.UpdateRow(payloadInhibitRow, "Off", static_cast<int>(SharedTypes::Status::none));
+    switchOutcomeSuffix_.clear();
 }
 
 QString GroundControl::AdjustName(int adjustRow, bool increase)
 {
-    switch(adjustRow)
+    switch (adjustRow)
     {
-        case batteryAdjustRow:
-            return increase ? SharedTypes::batteryUpMessage : SharedTypes::batteryDownMessage;
-        case timeScaleAdjustRow:
-            return increase ? SharedTypes::timeScaleUpMessage : SharedTypes::timeScaleDownMessage;
-        default:
-            return QString();
+    case batteryAdjustRow:
+        return increase ? SharedTypes::batteryUpMessage : SharedTypes::batteryDownMessage;
+    case timeScaleAdjustRow:
+        return increase ? SharedTypes::timeScaleUpMessage : SharedTypes::timeScaleDownMessage;
+    default:
+        return QString();
     }
 }
 
 void GroundControl::HandleAdjustAck(qint64 sequence, bool accepted)
 {
-    if(!pendingAdjusts_.contains(sequence))
+    if (!pendingAdjusts_.contains(sequence))
         return;
 
     const PendingAdjust adjust = pendingAdjusts_.take(sequence);
@@ -396,10 +428,74 @@ void GroundControl::HandleAdjustAck(qint64 sequence, bool accepted)
 
 void GroundControl::HandleAdjustGaveUp(qint64 sequence)
 {
-    if(!pendingAdjusts_.contains(sequence))
+    if (!pendingAdjusts_.contains(sequence))
         return;
 
     const PendingAdjust adjust = pendingAdjusts_.take(sequence);
     cout << adjust.faultName.toStdString() << ": no response" << endl;
     adjustsModel_.UpdateRow(adjust.row, "No Response", static_cast<int>(SharedTypes::Status::critical));
+}
+
+QString GroundControl::CommandSwitchName(int switchRow, bool on)
+{
+    switch (switchRow)
+    {
+    case safeModeRow:
+        return on ? SharedTypes::forceSafeModeCommand : SharedTypes::exitSafeModeCommand;
+    case payloadInhibitRow:
+        return SharedTypes::inhibitPayloadCommand;
+    default:
+        return QString();
+    }
+}
+
+void GroundControl::HandleCommandSwitchAck(qint64 sequence, bool accepted)
+{
+    if (!pendingCommandSwitches_.contains(sequence))
+        return;
+
+    const PendingFault commandSwitch = pendingCommandSwitches_.take(sequence);
+    cout << CommandSwitchName(commandSwitch.row, commandSwitch.active).toStdString() << (accepted ? " accepted" : " rejected") << endl;
+
+    if (accepted)
+        commandsSwitchesModel_.UpdateRow(commandSwitch.row, commandSwitch.active ? "On" : "Off", static_cast<int>(commandSwitch.active ? SharedTypes::Status::warning : SharedTypes::Status::none));
+    else
+    {
+        switchOutcomeSuffix_[commandSwitch.row] = " (Rejected)";
+        commandsSwitchesModel_.UpdateRow(commandSwitch.row, "Rejected", static_cast<int>(SharedTypes::Status::critical));
+    }
+}
+
+void GroundControl::HandleCommandSwitchGaveUp(qint64 sequence)
+{
+    if(!pendingCommandSwitches_.contains(sequence))
+        return;
+
+    const PendingFault commandSwitch = pendingCommandSwitches_.take(sequence);
+    cout << CommandSwitchName(commandSwitch.row, commandSwitch.active).toStdString() << ": no response" << endl;
+    switchOutcomeSuffix_[commandSwitch.row] = " (No Response)";
+    commandsSwitchesModel_.UpdateRow(commandSwitch.row, "No Response", static_cast<int>(SharedTypes::Status::critical));
+}
+
+bool GroundControl::SwitchPending(int switchRow) const
+{
+    for(const PendingFault &pending : pendingCommandSwitches_)
+        if(pending.row == switchRow)
+            return true;
+
+    return false;
+}
+
+void GroundControl::UpdateSafeModeSwitchRow(bool stale)
+{
+    if(SwitchPending(safeModeRow))
+        return;
+
+    const bool inSafeMode = mode_ == SharedTypes::Mode::safe;
+    const QString suffix = switchOutcomeSuffix_.value(safeModeRow);
+    SharedTypes::Status status = stale ? SharedTypes::Status::stale
+                                : !suffix.isEmpty() ? SharedTypes::Status::critical
+                                : inSafeMode ? SharedTypes::Status::warning
+                                        : SharedTypes::Status::none;
+    commandsSwitchesModel_.UpdateRow(safeModeRow, (inSafeMode ? "On" : "Off") + suffix, static_cast<int>(status)); 
 }

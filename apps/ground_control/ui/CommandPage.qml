@@ -17,8 +17,11 @@ Page {
     readonly property int buttonHeight: Math.round(shortestSide * 0.1)
     readonly property int buttonFontSize: Math.round(shortestSide * 0.05)
     readonly property int commandCount: Math.max(1, commandRepeater.count)
-    readonly property int rowHeight: Math.round(Math.min((height - titleFontSize - buttonHeight - pageMargin * (commandCount + 3)) / commandCount, shortestSide * .2))
+    readonly property int totalRowCount: commandCount + switchRepeater.count
+    readonly property int rowHeight: Math.round(Math.min((height - titleFontSize - buttonHeight - pageMargin * (totalRowCount + 3)) / totalRowCount, shortestSide * .2))
     readonly property int rowFontSize: Math.round(Math.min(rowHeight * 0.4, shortestSide * .1))
+    readonly property real switchFraction: .12
+    readonly property int switchHeight: Math.round(Math.min(rowHeight * .5, width * switchFraction / 2))
 
     ColumnLayout {
         anchors.fill: parent
@@ -30,6 +33,77 @@ Page {
             color: "green"
             font.pixelSize: commandPage.titleFontSize
             Layout.alignment: Qt.AlignHCenter
+        }
+
+        Repeater {
+            id: switchRepeater
+            model: groundControl.commandsSwitchModel
+
+            delegate: RowLayout {
+                id: switchRow
+                Layout.fillWidth: true
+                Layout.preferredHeight: commandPage.rowHeight
+                spacing: commandPage.pageMargin
+
+                required property int index
+                required property string label
+                required property string value
+                required property int status
+
+                Label {
+                    text: switchRow.label
+                    color: "white"
+                    font.pixelSize: commandPage.rowFontSize
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: 8
+                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
+                    verticalAlignment: Text.AlignVCenter
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                }
+
+                Label {
+                    text: switchRow.value
+                    color: root.statusColor(switchRow.status)
+                    font.pixelSize: commandPage.rowFontSize
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: 8
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                    Layout.preferredWidth: commandPage.width * 0.35
+                    Layout.fillHeight: true
+                }
+
+                Switch {
+                    id: commandSwitch
+                    Layout.preferredWidth: commandPage.switchHeight * 2
+                    Layout.alignment: Qt.AlignVCenter
+                    checked: switchRow.value.startsWith("On") || switchRow.value.startsWith("Turning On")
+                    onToggled: {
+                        groundControl.SetCommandSwitch(switchRow.index, checked);
+                        checked = Qt.binding(function () {
+                            return switchRow.value.startsWith("On") || switchRow.value.startsWith("Turning On");
+                        });
+                    }
+
+                    indicator: Rectangle {
+                        implicitWidth: commandPage.switchHeight * 1.5
+                        implicitHeight: commandPage.switchHeight * 0.75
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: height / 2
+                        color: commandSwitch.checked ? "orange" : "gray"
+
+                        Rectangle {
+                            width: parent.height
+                            height: parent.height
+                            radius: height / 2
+                            color: "white"
+                            x: commandSwitch.checked ? parent.width - width : 0
+                        }
+                    }
+                }
+            }
         }
 
         Repeater {
@@ -82,7 +156,9 @@ Page {
             }
         }
 
-        Item { Layout.fillHeight: true}
+        Item {
+            Layout.fillHeight: true
+        }
 
         Button {
             text: "Back"
