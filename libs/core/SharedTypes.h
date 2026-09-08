@@ -68,6 +68,7 @@ namespace SharedTypes
     inline const QString rebootCommand = "reboot";
     inline const QString inhibitFaultCommand = "inhibitFault";
     inline const QString forceSafeModeCommand = "forceSafeMode";
+    inline const QString pingCommand = "ping";
 
     // Ack Variables
     inline constexpr int ackTimeoutMilliseconds = 500;

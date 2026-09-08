@@ -70,16 +70,6 @@ ApplicationWindow {
         onActivated: root.visibility = root.visibility === Window.FullScreen ? Window.Windowed : Window.FullScreen
     }
 
-    Shortcut {
-        sequence: "Up"
-        onActivated: flightComputer.ModeTestUp()
-    }
-
-    Shortcut {
-        sequence: "Down"
-        onActivated: flightComputer.ModeTestDown()
-    }
-
     Grid {
         id: readoutGrid
         anchors.fill: parent

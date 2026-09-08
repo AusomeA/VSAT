@@ -33,6 +33,7 @@ enum CommandRowIndex
     forceSafeModeRow,
     exitSafeModeRow,
     rebootRow,
+    pingRow,
     commandRowCount
 };
 
