@@ -16,7 +16,7 @@ Page {
     readonly property int buttonHeight: Math.round(shortestSide * 0.1)
     readonly property int buttonFontSize: Math.round(shortestSide * 0.05)
     readonly property int commandCount: Math.max(1, commandRepeater.count)
-    readonly property int rowHeight: Math.round((height - titleFontSize - buttonHeight - pageMargin * (commandCount + 3)) / commandCount)
+    readonly property int rowHeight: Math.round(Math.min((height - titleFontSize - buttonHeight - pageMargin * (commandCount + 3)) / commandCount, shortestSide * .2))
     readonly property int rowFontSize: Math.round(Math.min(rowHeight * 0.4, shortestSide * .1))
 
     ColumnLayout {
@@ -38,7 +38,7 @@ Page {
             delegate: RowLayout {
                 id: commandRow
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.preferredHeight: commandPage.rowHeight
                 spacing: commandPage.pageMargin * 2
 
                 required property int index
@@ -57,10 +57,11 @@ Page {
                     contentItem: Text {
                         text: commandButton.text
                         font: commandButton.font
-                        color: commandButton.palette.buttonText
+                        color: "black"
                         fontSizeMode: Text.Fit
                         minimumPixelSize: 8
                         elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -79,9 +80,12 @@ Page {
                 }
             }
         }
+
+        Item { Layout.fillHeight: true}
+
         Button {
             text: "Back"
-            Layout.preferredWidth: commandPage.buttonHeight * 2
+            Layout.preferredWidth: commandPage.buttonHeight * 3
             Layout.preferredHeight: commandPage.buttonHeight
             font.pixelSize: commandPage.buttonFontSize
             onClicked: commandPage.StackView.view.pop()

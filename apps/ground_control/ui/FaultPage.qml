@@ -17,12 +17,12 @@ Page {
     readonly property int buttonFontSize: Math.round(shortestSide * .05)
     readonly property int faultCount: Math.max(1, faultRepeater.count)
     readonly property int headerFontSize: Math.round(shortestSide * .04)
-    readonly property int rowHeight: Math.round((height - headerFontSize - titleFontSize - buttonHeight - pageMargin * (faultCount + 4)) / faultCount)
+    readonly property int rowHeight: Math.round(Math.min((height - headerFontSize - titleFontSize - buttonHeight - pageMargin * (faultCount + 4)) / faultCount, shortestSide * .2))
     readonly property int rowFontSize: Math.round(Math.min(rowHeight * 0.4, switchHeight * 1.2))
     readonly property bool portrait: height > width
     readonly property real labelFraction: portrait ? .35 : .5
     readonly property int labelWidth: Math.round(width * labelFraction)
-    readonly property real switchFraction: .08
+    readonly property real switchFraction: .12
     readonly property int switchHeight: Math.round(Math.min(rowHeight * .5, width * switchFraction / 2))
     readonly property int switchColumnCount: 2
     readonly property int valueWidth: Math.round((width - pageMargin * 2 - labelWidth - (switchHeight * 2 + pageMargin * 2) * switchColumnCount) / switchColumnCount)
@@ -42,7 +42,6 @@ Page {
 
         GridLayout {
             Layout.fillWidth: true
-            Layout.fillHeight: true
             columns: 2
             rows: faultPage.faultCount + 1
             flow: GridLayout.TopToBottom
@@ -205,9 +204,11 @@ Page {
             }
         }
 
+        Item { Layout.fillHeight: true}
+
         Button {
             text: "Back"
-            Layout.preferredWidth: faultPage.buttonHeight * 2
+            Layout.preferredWidth: faultPage.buttonHeight * 3
             Layout.preferredHeight: faultPage.buttonHeight
             font.pixelSize: faultPage.buttonFontSize
             onClicked: faultPage.StackView.view.pop()

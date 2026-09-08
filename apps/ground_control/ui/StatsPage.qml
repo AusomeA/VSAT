@@ -95,7 +95,7 @@ Page {
 
     Button {
         text: "Back"
-        width: statsPage.buttonHeight * 2
+        width: statsPage.buttonHeight * 3
         height: statsPage.buttonHeight
         anchors.bottom: parent.bottom
         anchors.left: parent.left
