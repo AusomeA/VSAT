@@ -1,10 +1,14 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import GroundControl
 
 ApplicationWindow {
     id: root
+
+    Material.theme: Material.Dark
+    Material.roundedScale: Material.SmallScale
 
     GroundControl {
         id: groundControl

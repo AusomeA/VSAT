@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import GroundControl
 
@@ -57,7 +58,7 @@ Page {
                     contentItem: Text {
                         text: commandButton.text
                         font: commandButton.font
-                        color: "black"
+                        color: commandButton.Material.foreground
                         fontSizeMode: Text.Fit
                         minimumPixelSize: 8
                         elide: Text.ElideRight
