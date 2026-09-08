@@ -10,6 +10,7 @@
 #include <QUdpSocket>
 #include <QHostAddress>
 #include <QElapsedTimer>
+#include <QHash>
 
 enum ReadoutRowIndex
 {
@@ -106,6 +107,13 @@ private:
     UdpReceiver commandReceiver_;
     UdpReceiver faultReceiver_;
     QHostAddress flightComputerAddress_;
+
+    struct LastAck
+    {
+        qint64 sequence = -1;
+        bool accepted = false;
+    };
+    QHash<QString, LastAck> lastAcks_;
 
     QTimer telemetrySendTimer_;
     

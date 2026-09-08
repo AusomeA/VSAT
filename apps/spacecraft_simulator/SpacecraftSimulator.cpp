@@ -46,11 +46,10 @@ SpacecraftSimulator::SpacecraftSimulator(QObject *parent)
     connect(&telemetrySendTimer_, &QTimer::timeout, this, &SpacecraftSimulator::SendTelemetry);
     connect(&commandReceiver_, &UdpReceiver::DatagramReceived, this, &SpacecraftSimulator::HandleCommands);
     connect(&faultReceiver_, &UdpReceiver::DatagramReceived, this, &SpacecraftSimulator::HandleFaultInjection);
-    connect(&discovery_, &Discovery::peerAppeared, this, [this](const QString &appName, const QHostAddress &address) 
-    {
+    connect(&discovery_, &Discovery::peerAppeared, this, [this](const QString &appName, const QHostAddress &address)
+            {
         if(appName == SharedTypes::flightComputerName)
-            flightComputerAddress_ = address;
-    });
+            flightComputerAddress_ = address; });
     telemetrySendTimer_.start(telemetrySendIntervalMilliseconds);
 
     const QStringList arguments = QCoreApplication::arguments();
@@ -484,14 +483,23 @@ void SpacecraftSimulator::HandleFaultInjection(const QByteArray &payload, const 
         return;
     }
 
-    const QString faultName = envelope->body["fault"].toString();
-    const bool active = envelope->body["active"].toBool();
-    const bool accepted = ApplyFaultInjection(faultName, active);
+    const QString senderKey = senderAddress.toString() + ":" + QString::number(senderPort);
+    LastAck &lastAck = lastAcks_[senderKey];
+
+    if (lastAck.sequence == envelope->sequence)
+        cout << "Duplicate fault injection request " << envelope->sequence << " re-acknowledged without applying" << endl;
+    else
+    {
+        const QString faultName = envelope->body["fault"].toString();
+        const bool active = envelope->body["active"].toBool();
+        lastAck.sequence = envelope->sequence;
+        lastAck.accepted = ApplyFaultInjection(faultName, active);
+    }
 
     Envelope ackEnvelope;
     ackEnvelope.type = SharedTypes::ackMessageType;
     ackEnvelope.sequence = envelope->sequence;
-    ackEnvelope.body["accepted"] = accepted;
+    ackEnvelope.body["accepted"] = lastAck.accepted;
     telemetrySocket_.writeDatagram(EnvelopeToJson(ackEnvelope), senderAddress, senderPort);
 }
 
@@ -501,12 +509,22 @@ bool SpacecraftSimulator::ApplyFaultInjection(const QString &faultName, bool act
 
     const bool healthy = !active;
 
-    if(faultName == SharedTypes::temperatureSensorFaultMessage)
+    if (faultName == SharedTypes::temperatureSensorFaultMessage)
         temperatureSensorHealthy_ = healthy;
-    else if(faultName == SharedTypes::powerSensorFaultMessage)
+    else if (faultName == SharedTypes::powerSensorFaultMessage)
         powerSensorHealthy_ = healthy;
-    else if(faultName == SharedTypes::attitudeSensorFaultMessage)
+    else if (faultName == SharedTypes::attitudeSensorFaultMessage)
         attitudeSensorHealthy_ = healthy;
+    else if (faultName == SharedTypes::chaosFaultMessage)
+    {
+        chaosEnabled_ = active;
+        cout << "Chaos mode " << (active ? "on" : "off") << endl;
+        return true;
+    }
+    else if (faultName == SharedTypes::batteryUpMessage) {BatteryTestUp(); return true;}
+    else if (faultName == SharedTypes::batteryDownMessage) {BatteryTestDown(); return true;}
+    else if (faultName == SharedTypes::timeScaleUpMessage) {IncreaseTimeScale(); return true;}
+    else if (faultName == SharedTypes::timeScaleDownMessage) {DecreaseTimeScale(); return true;}
     else
     {
         cout << "Rejected unknown fault injection request: " << faultName.toStdString() << endl;

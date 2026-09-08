@@ -57,6 +57,11 @@ namespace SharedTypes
     inline const QString temperatureSensorFaultMessage = "temperatureSensorFault";
     inline const QString powerSensorFaultMessage = "powerSensorFault";
     inline const QString attitudeSensorFaultMessage = "attitudeSensorFault";
+    inline const QString chaosFaultMessage = "chaosMode";
+    inline const QString batteryUpMessage = "batteryUp";
+    inline const QString batteryDownMessage = "batteryDown";
+    inline const QString timeScaleUpMessage = "timeScaleUp";
+    inline const QString timeScaleDownMessage = "timeScaleDown";
 
     // command messages
     inline const QString exitSafeModeCommand = "exitSafeMode";
