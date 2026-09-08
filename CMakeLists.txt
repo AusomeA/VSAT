@@ -185,49 +185,58 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/networking
 )
 
+set_target_properties(
+    ground_control
+    PROPERTIES
+    QT_ANDROID_PACKAGE_NAME "com.BWGGames.vsat.groundcontrol"
+    QT_ANDROID_APP_NAME "VSAT Ground Control"
+    QT_ANDROID_APP_ICON "@drawable/icon"
+    QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/apps/ground_control/android
+)
+
 ################# testing #####################
 if(NOT ANDROID)
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
-)
-FetchContent_MakeAvailable(googletest)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
+    )
+    FetchContent_MakeAvailable(googletest)
 
-enable_testing()
+    enable_testing()
 
-add_executable(
-    vsat_tests
-    tests/FlightComputerTests.cpp
-    tests/EnvelopeTests.cpp
-    apps/flight_computer/FlightComputer.h
-    apps/flight_computer/FlightComputer.cpp
-    libs/core/SharedTypes.h
-    libs/protocol/EnvelopeJson.h
-)
+    add_executable(
+        vsat_tests
+        tests/FlightComputerTests.cpp
+        tests/EnvelopeTests.cpp
+        apps/flight_computer/FlightComputer.h
+        apps/flight_computer/FlightComputer.cpp
+        libs/core/SharedTypes.h
+        libs/protocol/EnvelopeJson.h
+    )
 
-target_link_libraries(
-    vsat_tests
-    PRIVATE
-    GTest::gtest_main
-    Qt6::Qml
-    Qt6::Network
-)
+    target_link_libraries(
+        vsat_tests
+        PRIVATE
+        GTest::gtest_main
+        Qt6::Qml
+        Qt6::Network
+    )
 
-target_include_directories(
-    vsat_tests
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/apps/flight_computer
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/protocol
-)
+    target_include_directories(
+        vsat_tests
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/apps/flight_computer
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/protocol
+    )
 
-target_compile_features(
-    vsat_tests
-    PRIVATE
-    cxx_std_20
-)
+    target_compile_features(
+        vsat_tests
+        PRIVATE
+        cxx_std_20
+    )
 
-include(GoogleTest)
-gtest_discover_tests(vsat_tests)
+    include(GoogleTest)
+    gtest_discover_tests(vsat_tests)
 endif()
