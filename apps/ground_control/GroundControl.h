@@ -30,6 +30,7 @@ enum FaultRowIndex
 
 enum CommandRowIndex
 {
+    forceSafeModeRow,
     exitSafeModeRow,
     rebootRow,
     commandRowCount

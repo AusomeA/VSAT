@@ -91,6 +91,8 @@ void FlightComputerShell::HandleGroundCommand(const QByteArray &payload, const Q
         accepted = flightComputer_.RequestExitSafeMode();
     else if(command == SharedTypes::rebootCommand)
         accepted = flightComputer_.Reboot();
+    else if(command == SharedTypes::forceSafeModeCommand)
+        accepted = flightComputer_.ForceSafeMode();
     else if(command == SharedTypes::inhibitFaultCommand)
         accepted = flightComputer_.SetFaultInhibited(envelope->body["fault"].toString(), envelope->body["inhibited"].toBool());
 

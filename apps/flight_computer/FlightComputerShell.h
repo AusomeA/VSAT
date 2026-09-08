@@ -29,9 +29,6 @@ Q_OBJECT
 
     QAbstractItemModel *ReadoutsModelPtr() {return &readoutsModel_;}
 
-    Q_INVOKABLE void ModeTestUp()   {flightComputer_.ModeTestUp(); UpdateRows();}
-    Q_INVOKABLE void ModeTestDown() {flightComputer_.ModeTestDown(); UpdateRows();}
-
     private:
     FlightComputer flightComputer_;
     ReadoutsModel readoutsModel_;

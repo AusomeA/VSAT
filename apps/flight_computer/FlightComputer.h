@@ -10,6 +10,7 @@ public:
 
     SharedTypes::Commands Update(const SharedTypes::Telemetry &telemetry);
     bool RequestExitSafeMode();
+    bool ForceSafeMode();
     bool Reboot();
     bool SetFaultInhibited(const QString &faultName, bool inhibited);
 
@@ -44,9 +45,4 @@ private:
     bool GetSensorFailed(bool healthy, const QString &faultName) const {return !healthy && !inhibitedFaults_.contains(faultName);}
 
     float TimeIntoOrbit() const;
-
-    ///////// Testing Functions ///////////
-public:
-    void ModeTestUp();
-    void ModeTestDown();
 };

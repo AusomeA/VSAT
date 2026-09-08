@@ -46,6 +46,15 @@ bool FlightComputer::RequestExitSafeMode()
     return mode_ != SharedTypes::Mode::safe;
 }
 
+bool FlightComputer::ForceSafeMode()
+{
+    mode_ = SharedTypes::Mode::safe;
+    cout << "Spacecraft in safe mode because:" << endl
+         << "Commanded by Ground Control" << endl;
+
+    return true;
+}
+
 bool FlightComputer::Reboot()
 {
     cout << "Flight computer rebooting" << endl;
@@ -239,38 +248,5 @@ void FlightComputer::HeaterCheck()
     {
         heaterEnabled_ = false;
         cout << "Heater commanded off" << endl;
-    }
-}
-
-/////////////////////////////////// Testing Functions /////////////////////////////////////////////////
-void FlightComputer::ModeTestUp()
-{
-    if (mode_ == SharedTypes::Mode::nominal)
-    {
-        mode_ = SharedTypes::Mode::degraded;
-        cout << "mode changed to degraded" << endl;
-        lastGroundContactSeconds_ = telemetry_.missionElapsedTimeSeconds;
-    }
-    else if (mode_ == SharedTypes::Mode::degraded)
-    {
-        mode_ = SharedTypes::Mode::safe;
-        cout << "mode changed to safe" << endl;
-        lastGroundContactSeconds_ = telemetry_.missionElapsedTimeSeconds;
-    }
-}
-
-void FlightComputer::ModeTestDown()
-{
-    if (mode_ == SharedTypes::Mode::safe)
-    {
-        mode_ = SharedTypes::Mode::degraded;
-        cout << "mode changed to degraded" << endl;
-        lastGroundContactSeconds_ = telemetry_.missionElapsedTimeSeconds;
-    }
-    else if (mode_ == SharedTypes::Mode::degraded)
-    {
-        mode_ = SharedTypes::Mode::nominal;
-        cout << "mode changed to nominal" << endl;
-        lastGroundContactSeconds_ = telemetry_.missionElapsedTimeSeconds;
     }
 }
