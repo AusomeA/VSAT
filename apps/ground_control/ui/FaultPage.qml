@@ -209,7 +209,7 @@ Page {
         Button {
             text: "Back"
             Layout.preferredWidth: faultPage.buttonHeight * 3
-            Layout.preferredHeight: faultPage.buttonHeight
+            Layout.preferredHeight: faultPage.buttonHeight * 2
             font.pixelSize: faultPage.buttonFontSize
             onClicked: faultPage.StackView.view.pop()
         }

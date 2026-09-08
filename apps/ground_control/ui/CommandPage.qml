@@ -86,7 +86,7 @@ Page {
         Button {
             text: "Back"
             Layout.preferredWidth: commandPage.buttonHeight * 3
-            Layout.preferredHeight: commandPage.buttonHeight
+            Layout.preferredHeight: commandPage.buttonHeight * 2
             font.pixelSize: commandPage.buttonFontSize
             onClicked: commandPage.StackView.view.pop()
         }
