@@ -17,9 +17,15 @@ GroundControl::GroundControl(QObject *parent)
 
     faultsModel_.SetRows({{"Temperature Sensor Fault", "Off", static_cast<int>(SharedTypes::Status::none)},
                           {"Power Sensor Fault", "Off", static_cast<int>(SharedTypes::Status::none)},
-                          {"Attitude Sensor Fault", "Off", static_cast<int>(SharedTypes::Status::none)}});
+                          {"Attitude Sensor Fault", "Off", static_cast<int>(SharedTypes::Status::none)},
+                          {"Chaos Mode", "Off", static_cast<int>(SharedTypes::Status::none)}});
     connect(&godSender_, &AckUdpSender::Acknowledged, this, &GroundControl::HandleFaultAck);
     connect(&godSender_, &AckUdpSender::GaveUp, this, &GroundControl::HandleFaultGaveUp);
+
+    adjustsModel_.SetRows({{"Battery", "Ready", static_cast<int>(SharedTypes::Status::none)},
+                          {"Time Scale", "Ready", static_cast<int>(SharedTypes::Status::none)}});
+    connect(&godSender_, &AckUdpSender::Acknowledged, this, &GroundControl::HandleAdjustAck);
+    connect(&godSender_, &AckUdpSender::GaveUp, this, &GroundControl::HandleAdjustGaveUp);
 
     commandsModel_.SetRows({{"Exit Safe Mode", "Ready", static_cast<int>(SharedTypes::Status::none)},
                             {"Reboot Flight Computer", "Ready", static_cast<int>(SharedTypes::Status::none)}});
@@ -146,6 +152,8 @@ QString GroundControl::FaultName(int faultRow)
         return SharedTypes::powerSensorFaultMessage;
     case attitudeSensorFaultRow:
         return SharedTypes::attitudeSensorFaultMessage;
+    case chaosRow:
+        return SharedTypes::chaosFaultMessage;
     default:
         return QString();
     }
@@ -257,6 +265,34 @@ void GroundControl::HandleFaultGaveUp(qint64 sequence)
     faultsModel_.UpdateRow(fault.row, "No Response", static_cast<int>(SharedTypes::Status::critical));
 }
 
+void GroundControl::SendAdjust(int adjustRow, bool increase)
+{
+    const QString faultName = AdjustName(adjustRow, increase);
+    if(faultName.isEmpty())
+    {
+        qWarning() << "Unknown adjust row" << adjustRow;
+        return;
+    }
+
+    const QList<QHostAddress> simulators = discovery_.LivePeerAddresses(SharedTypes::simulatorName);
+
+    if(simulators.isEmpty())
+    {
+        adjustsModel_.UpdateRow(adjustRow, "No Simulator", static_cast<int>(SharedTypes::Status::critical));
+        cout << "No simulator to send " << faultName.toStdString() << " to" << endl;
+        return;
+    }
+
+    QJsonObject body;
+    body["fault"] = faultName;
+    body["active"] = true;
+
+    const qint64 sequence = godSender_.SendAck(SharedTypes::faultInjectionMessageType, body, simulators.first(), SharedTypes::godPort);
+    pendingAdjusts_[sequence] = {adjustRow, faultName};
+    adjustsModel_.UpdateRow(adjustRow, "Sending...", static_cast<int>(SharedTypes::Status::warning));
+    cout << "Sent " << faultName.toStdString() << endl;
+}
+
 QString GroundControl::CommandName(int commandRow)
 {
     switch (commandRow)
@@ -327,4 +363,37 @@ void GroundControl::ResetInhibitRows()
 {
     for (int row = 0; row < faultRowCount; ++row)
         inhibitsModel_.UpdateRow(row, "Off", static_cast<int>(SharedTypes::Status::none));
+}
+
+QString GroundControl::AdjustName(int adjustRow, bool increase)
+{
+    switch(adjustRow)
+    {
+        case batteryAdjustRow:
+            return increase ? SharedTypes::batteryUpMessage : SharedTypes::batteryDownMessage;
+        case timeScaleAdjustRow:
+            return increase ? SharedTypes::timeScaleUpMessage : SharedTypes::timeScaleDownMessage;
+        default:
+            return QString();
+    }
+}
+
+void GroundControl::HandleAdjustAck(qint64 sequence, bool accepted)
+{
+    if(!pendingAdjusts_.contains(sequence))
+        return;
+
+    const PendingAdjust adjust = pendingAdjusts_.take(sequence);
+    cout << adjust.faultName.toStdString() << (accepted ? " accepted" : " rejected") << endl;
+    adjustsModel_.UpdateRow(adjust.row, accepted ? "Accepted" : "Rejected", static_cast<int>(accepted ? SharedTypes::Status::good : SharedTypes::Status::critical));
+}
+
+void GroundControl::HandleAdjustGaveUp(qint64 sequence)
+{
+    if(!pendingAdjusts_.contains(sequence))
+        return;
+
+    const PendingAdjust adjust = pendingAdjusts_.take(sequence);
+    cout << adjust.faultName.toStdString() << ": no response" << endl;
+    adjustsModel_.UpdateRow(adjust.row, "No Response", static_cast<int>(SharedTypes::Status::critical));
 }

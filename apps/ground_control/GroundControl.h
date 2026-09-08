@@ -24,6 +24,7 @@ enum FaultRowIndex
     temperatureSensorFaultRow,
     powerSensorFaultRow,
     attitudeSensorFaultRow,
+    chaosRow,
     faultRowCount
 };
 
@@ -32,6 +33,13 @@ enum CommandRowIndex
     exitSafeModeRow,
     rebootRow,
     commandRowCount
+};
+
+enum AdjustRowIndex
+{
+    batteryAdjustRow,
+    timeScaleAdjustRow,
+    adjustRowCount
 };
 
 class GroundControl : public QObject
@@ -46,6 +54,7 @@ class GroundControl : public QObject
     Q_PROPERTY(QAbstractItemModel *faultsModel READ FaultsModelPtr CONSTANT)
     Q_PROPERTY(QAbstractItemModel *commandsModel READ CommandsModelPtr CONSTANT)
     Q_PROPERTY(QAbstractItemModel *inhibitsModel READ InhibitsModelPtr CONSTANT)
+    Q_PROPERTY(QAbstractItemModel *adjustsModel READ AdjustsModelPtr CONSTANT)
 
 public:
     GroundControl(QObject *parent = nullptr);
@@ -65,6 +74,9 @@ public:
 
     QAbstractItemModel *InhibitsModelPtr() { return &inhibitsModel_; }
     Q_INVOKABLE void SetInhibits(int faultRow, bool inhibited);
+
+    QAbstractItemModel *AdjustsModelPtr() { return &adjustsModel_; }
+    Q_INVOKABLE void SendAdjust(int adjustRow, bool increase);
 
 signals:
     void summaryChanged();
@@ -102,6 +114,14 @@ private:
 
     QMap<qint64, PendingFault> pendingFaults_;
 
+    ReadoutsModel adjustsModel_;
+    struct PendingAdjust
+    {
+        int row = 0;
+        QString faultName;
+    };
+    QMap<qint64, PendingAdjust> pendingAdjusts_;
+
     ReadoutsModel commandsModel_;
     AckUdpSender groundSender_;
     QMap<qint64, int> pendingCommands_;
@@ -123,4 +143,8 @@ private:
     void HandleInhibitAck(qint64 sequence, bool accepted);
     void HandleInhibitGaveUp(qint64 sequence);
     void ResetInhibitRows();
+
+    static QString AdjustName(int adjustRow, bool increase);
+    void HandleAdjustAck(qint64 sequence, bool accepted);
+    void HandleAdjustGaveUp(qint64 sequence);
 };
