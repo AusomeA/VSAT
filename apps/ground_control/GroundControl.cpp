@@ -357,6 +357,12 @@ void GroundControl::HandleCommandAck(qint64 sequence, bool accepted)
         return;
     }
 
+    if (accepted && commandRow == pingRow)
+    {
+        commandsModel_.UpdateRow(commandRow, "Link OK", static_cast<int>(SharedTypes::Status::good));
+        return;
+    }
+
     commandsModel_.UpdateRow(commandRow, accepted ? "Accepted" : "Rejected", static_cast<int>(accepted ? SharedTypes::Status::good : SharedTypes::Status::critical));
 }
 
