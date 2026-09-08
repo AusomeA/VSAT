@@ -16,8 +16,10 @@ Page {
     readonly property int buttonHeight: Math.round(shortestSide * .1)
     readonly property int buttonFontSize: Math.round(shortestSide * .05)
     readonly property int faultCount: Math.max(1, faultRepeater.count)
+    readonly property int adjustCount: adjustRepeater.count
+    readonly property int totalRowCount: faultCount + adjustCount
     readonly property int headerFontSize: Math.round(shortestSide * .04)
-    readonly property int rowHeight: Math.round(Math.min((height - headerFontSize - titleFontSize - buttonHeight - pageMargin * (faultCount + 4)) / faultCount, shortestSide * .2))
+    readonly property int rowHeight: Math.round(Math.min((height - headerFontSize - titleFontSize - buttonHeight - pageMargin * (totalRowCount + 4)) / totalRowCount, shortestSide * .2))
     readonly property int rowFontSize: Math.round(Math.min(rowHeight * 0.4, switchHeight * 1.2))
     readonly property bool portrait: height > width
     readonly property real labelFraction: portrait ? .35 : .5
@@ -204,7 +206,67 @@ Page {
             }
         }
 
-        Item { Layout.fillHeight: true}
+        Repeater {
+            id: adjustRepeater
+            model: groundControl.adjustsModel
+
+            delegate: RowLayout {
+                id: adjustRow
+                Layout.fillWidth: true
+                Layout.preferredHeight: faultPage.rowHeight
+                spacing: faultPage.pageMargin
+
+                required property int index
+                required property string label
+                required property string value
+                required property int status
+
+                Label {
+                    text: adjustRow.label
+                    color: "white"
+                    font.pixelSize: faultPage.rowFontSize
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: 8
+                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
+                    verticalAlignment: Text.AlignVCenter
+                    Layout.preferredWidth: faultPage.labelWidth
+                    Layout.fillHeight: true
+                }
+
+                Label {
+                    text: adjustRow.value
+                    color: root.statusColor(adjustRow.status)
+                    font.pixelSize: faultPage.rowFontSize
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: 8
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                    Layout.preferredWidth: faultPage.valueWidth
+                    Layout.fillHeight: true
+                }
+
+                Button {
+                    text: "-"
+                    font.pixelSize: faultPage.rowFontSize
+                    Layout.preferredWidth: faultPage.switchHeight * 2
+                    Layout.preferredHeight: faultPage.rowHeight * 0.8
+                    onClicked: groundControl.SendAdjust(adjustRow.index, false)
+                }
+
+                Button {
+                    text: "+"
+                    font.pixelSize: faultPage.rowFontSize
+                    Layout.preferredWidth: faultPage.switchHeight * 2
+                    Layout.preferredHeight: faultPage.rowHeight * 0.8
+                    onClicked: groundControl.SendAdjust(adjustRow.index, true)
+                }
+            }
+        }
+
+        Item {
+            Layout.fillHeight: true
+        }
 
         Button {
             text: "Back"
