@@ -12,6 +12,7 @@ find_package(
     Quick
     Qml
     Network
+    QuickControls2
 )
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -167,6 +168,7 @@ target_link_libraries(
     Qt6::Quick
     Qt6::Qml
     Qt6::Network
+    Qt6::QuickControls2
 )
 
 target_compile_features(
