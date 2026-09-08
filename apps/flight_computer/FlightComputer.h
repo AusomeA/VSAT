@@ -13,6 +13,7 @@ public:
     bool ForceSafeMode();
     bool Reboot();
     bool SetFaultInhibited(const QString &faultName, bool inhibited);
+    bool SetPayloadInhibited(bool inhibited);
 
     SharedTypes::Mode GetMode() const { return mode_; }
 
@@ -23,6 +24,7 @@ private:
     bool payloadEnabled_;
     bool commsTransmitting_;
     bool heaterEnabled_; // FC's own last-commanded state - deliberately NOT read from telemetry
+    bool payloadInhibited_ = false;
 
     SharedTypes::Telemetry telemetry_;
 

@@ -80,6 +80,13 @@ bool FlightComputer::SetFaultInhibited(const QString &faultName, bool inhibited)
     return true;
 }
 
+bool FlightComputer::SetPayloadInhibited(bool inhibited)
+{
+    payloadInhibited_ = inhibited;
+    cout << "Payload " << (inhibited ? "inhibited by ground" : "no longer inhibited by ground") << endl;
+    return true;
+}
+
 void FlightComputer::ModeCheck()
 {
     if (mode_ == SharedTypes::Mode::safe)
@@ -141,7 +148,7 @@ float FlightComputer::TimeIntoOrbit() const
 
 void FlightComputer::PayloadCheck()
 {
-    if (mode_ != SharedTypes::Mode::nominal)
+    if (mode_ != SharedTypes::Mode::nominal || payloadInhibited_)
     {
         if (payloadEnabled_)
             payloadEnabled_ = false;

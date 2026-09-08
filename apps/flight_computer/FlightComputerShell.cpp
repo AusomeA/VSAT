@@ -94,9 +94,11 @@ void FlightComputerShell::HandleGroundCommand(const QByteArray &payload, const Q
         accepted = flightComputer_.Reboot();
     else if (command == SharedTypes::inhibitFaultCommand)
         accepted = flightComputer_.SetFaultInhibited(envelope->body["fault"].toString(), envelope->body["inhibited"].toBool());
+    else if (command == SharedTypes::inhibitPayloadCommand)
+        accepted = flightComputer_.SetPayloadInhibited(envelope->body["inhibited"].toBool());
     else if (command == SharedTypes::forceSafeModeCommand)
         accepted = flightComputer_.ForceSafeMode();
-     else if(command == SharedTypes::pingCommand)
+    else if (command == SharedTypes::pingCommand)
         accepted = true;
 
     std::cout << "Ground command " << command.toStdString() << (accepted ? " accepted" : " rejected") << std::endl;

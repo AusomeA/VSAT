@@ -320,6 +320,29 @@ TEST(PayloadCheck, PayloadOffDuringSafeCheck)
     EXPECT_EQ(commands.payloadEnabled, false);
 }
 
+TEST(PayloadCheck, PayloadInhibitCheck)
+{
+    FlightComputer flightComputer;
+    SharedTypes::Telemetry telemetry = NominalTelemetry();
+    telemetry.missionElapsedTimeSeconds = 1000.0;
+
+    SharedTypes::Commands commands = flightComputer.Update(telemetry);
+    EXPECT_TRUE(commands.payloadEnabled);
+
+    EXPECT_TRUE(flightComputer.SetPayloadInhibited(true));
+    commands = flightComputer.Update(telemetry);
+    EXPECT_FALSE(commands.payloadEnabled);
+
+    EXPECT_TRUE(flightComputer.SetPayloadInhibited(false));
+    commands = flightComputer.Update(telemetry);
+    EXPECT_TRUE(commands.payloadEnabled);
+
+    EXPECT_TRUE(flightComputer.SetPayloadInhibited(true));
+    flightComputer.Reboot();
+    commands = flightComputer.Update(telemetry);
+    EXPECT_TRUE(commands.payloadEnabled);
+}
+
 TEST(CommsCheck, CommsTransmittingCheck)
 {
     FlightComputer flightComputer;
