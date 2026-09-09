@@ -121,6 +121,7 @@ namespace SharedTypes
         bool commsTransmitting = false;
         bool payloadEnabled = false;
         float secondsUntilSunrise = 0.f;
+        float timeScale = 1.f;
     };
 
     struct Commands

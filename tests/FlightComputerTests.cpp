@@ -16,6 +16,7 @@ SharedTypes::Telemetry NominalTelemetry()
     telemetry.powerSensorHealthy = true;
     telemetry.attitudeSensorHealthy = true;
     telemetry.secondsUntilSunrise = 0.f;
+    telemetry.timeScale = 1.f;
     return telemetry;
 }
 
@@ -486,6 +487,7 @@ TEST(TelemetryJson, TelemetryRoundTripCheck)
     telemetry.communicationsAvailable = true;
     telemetry.commsTransmitting = true;
     telemetry.payloadEnabled = true;
+    telemetry.timeScale = 8.f;
     telemetry.secondsUntilSunrise = 9500.1f;
 
     std::optional<SharedTypes::Telemetry> result = TelemetryFromJson(TelemetryToJson(telemetry));
@@ -506,6 +508,7 @@ TEST(TelemetryJson, TelemetryRoundTripCheck)
     EXPECT_EQ(result->communicationsAvailable, true);
     EXPECT_EQ(result->commsTransmitting, true);
     EXPECT_EQ(result->payloadEnabled, true);
+    EXPECT_FLOAT_EQ(result->timeScale, 8.f);
     EXPECT_FLOAT_EQ(result->secondsUntilSunrise, 9500.1f);
 }
 

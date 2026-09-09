@@ -9,7 +9,7 @@ inline const QStringList requiredTelemetryKeys = {
     "powerConsumptionWatts", "temperatureCelsius", "heaterEnabled",
     "radiatorLouversOpen", "isInSunlight", "temperatureSensorHealthy",
     "powerSensorHealthy", "attitudeSensorHealthy", "communicationsAvailable",
-    "commsTransmitting", "payloadEnabled", "secondsUntilSunrise"};
+    "commsTransmitting", "payloadEnabled", "secondsUntilSunrise", "timeScale"};
 
 inline const QStringList requiredCommandKeys = {
     "mode", "payloadEnabled", "commsTransmitting", "heaterEnabled"};
@@ -41,6 +41,7 @@ inline QJsonObject TelemetryToJsonObject(const SharedTypes::Telemetry &telemetry
     json["commsTransmitting"] = telemetry.commsTransmitting;
     json["payloadEnabled"] = telemetry.payloadEnabled;
     json["secondsUntilSunrise"] = telemetry.secondsUntilSunrise;
+    json["timeScale"] = telemetry.timeScale;
 
     return json;
 }
@@ -72,6 +73,7 @@ inline std::optional<SharedTypes::Telemetry> TelemetryFromJsonObject(const QJson
     telemetry.commsTransmitting = json["commsTransmitting"].toBool();
     telemetry.payloadEnabled = json["payloadEnabled"].toBool();
     telemetry.secondsUntilSunrise = json["secondsUntilSunrise"].toDouble();
+    telemetry.timeScale = json["timeScale"].toDouble();
 
     return telemetry;
 }

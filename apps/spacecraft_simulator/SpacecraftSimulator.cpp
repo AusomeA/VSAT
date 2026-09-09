@@ -199,6 +199,7 @@ SharedTypes::Telemetry SpacecraftSimulator::BuildTelemetry() const
     telemetry.commsTransmitting = commsTransmitting_;
     telemetry.payloadEnabled = payloadEnabled_;
     telemetry.secondsUntilSunrise = isInSunlight_ ? 0.f : SharedTypes::eclipseSeconds - TimeIntoOrbit();
+    telemetry.timeScale = timeScale_;
     return telemetry;
 }
 

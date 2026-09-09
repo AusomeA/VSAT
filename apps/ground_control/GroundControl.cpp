@@ -146,6 +146,8 @@ void GroundControl::UpdateRows(bool stale)
     readoutsModel_.UpdateRow(modeRow, ModeText(mode_), rowStatus(GetModeStatus(mode_)));
     UpdateTelemetryReadouts(readoutsModel_, telemetry_, gcHeaderRowCount, stale);
     UpdateSafeModeSwitchRow(stale);
+    adjustsModel_.UpdateRow(batteryAdjustRow, QString("%1 %").arg(telemetry_.batteryPercent, 0, 'f', 1), rowStatus(SharedTypes::Status::none));
+    adjustsModel_.UpdateRow(timeScaleAdjustRow, QString("%1x").arg(telemetry_.timeScale), rowStatus(SharedTypes::Status::none));
 }
 
 QString GroundControl::FaultName(int faultRow)
@@ -430,6 +432,9 @@ void GroundControl::HandleAdjustAck(qint64 sequence, bool accepted)
     const PendingAdjust adjust = pendingAdjusts_.take(sequence);
     cout << adjust.faultName.toStdString() << (accepted ? " accepted" : " rejected") << endl;
     adjustsModel_.UpdateRow(adjust.row, accepted ? "Accepted" : "Rejected", static_cast<int>(accepted ? SharedTypes::Status::good : SharedTypes::Status::critical));
+
+    if(!accepted)
+        adjustsModel_.UpdateRow(adjust.row, "Rejected", static_cast<int>(SharedTypes::Status::critical));
 }
 
 void GroundControl::HandleAdjustGaveUp(qint64 sequence)
