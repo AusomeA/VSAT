@@ -52,10 +52,16 @@ void FlightComputerShell::UpdateRows(bool stale)
     const SharedTypes::Mode mode = flightComputer_.GetMode();
     const int modeStatus = static_cast<int>(stale ? SharedTypes::Status::stale : GetModeStatus(mode));
 
-    readoutsModel_.UpdateRow(modeRow, ModeText(mode), modeStatus);
+    const SharedTypes::Telemetry &telemetry = flightComputer_.GetTelemetry();
+    const bool inContact = telemetry.communicationsAvailable && telemetry.commsTransmitting;
     const double lastContact = flightComputer_.GetLastGroundContactSeconds();
-    readoutsModel_.UpdateRow(lastGroundContactRow, lastContact < 0.0 ? "None" : MissionElapsedTimeText(lastContact), static_cast<int>(stale ? SharedTypes::Status::stale : SharedTypes::Status::none));
-    UpdateTelemetryReadouts(readoutsModel_, flightComputer_.GetTelemetry(), fcHeaderRowCount, stale);
+    const double secondsSinceContact = telemetry.missionElapsedTimeSeconds - lastContact;
+
+    readoutsModel_.UpdateRow(modeRow, ModeText(mode), modeStatus);
+    readoutsModel_.UpdateRow(lastGroundContactRow, 
+                            lastContact < 0.0 ? "None" : inContact ? "In Contact" : CountdownText(secondsSinceContact), 
+                            static_cast<int>(stale ? SharedTypes::Status::stale : inContact ? SharedTypes::Status::good : SharedTypes::Status::none));
+    UpdateTelemetryReadouts(readoutsModel_, telemetry, fcHeaderRowCount, stale);
 }
 
 void FlightComputerShell::HandleTelemetry(const QByteArray &payload)

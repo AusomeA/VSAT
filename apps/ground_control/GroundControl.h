@@ -107,12 +107,11 @@ private:
     bool flightComputerLinked_ = false;
     bool simulatorDiscovered_ = false;
 
-    static constexpr int linkCheckIntervalMilliseconds = 200;
+    double lastMETSeconds_ = -1.0;
+    float clockTimeScale_ = 1.f;
+    QElapsedTimer timeSinceMETSync_;
 
-    void HandleGroundTelemetry(const QByteArray &payload);
-    void UpdateLinkRow();
-    void PopulateRows();
-    void UpdateRows(bool stale = false);
+    static constexpr int linkCheckIntervalMilliseconds = 200;
 
     ReadoutsModel faultsModel_;
     AckUdpSender godSender_;
@@ -146,6 +145,15 @@ private:
     QMap<qint64, PendingFault> pendingInhibits_;
 
     bool rebootInProgress_ = false;
+
+    void HandleGroundTelemetry(const QByteArray &payload);
+    void UpdateLinkRow();
+    void PopulateRows();
+    void UpdateRows(bool stale = false);
+
+    void SyncMissionClock(double METSeconds, float timeScale);
+    double GetEstimatedMETSeconds() const;
+    void UpdateMissionClockRows();
 
     static QString FaultName(int faultRow);
     void HandleFaultAck(qint64 sequence, bool accepted);

@@ -98,6 +98,7 @@ void GroundControl::HandleGroundTelemetry(const QByteArray &payload)
     telemetry_ = *telemetry;
     mode_ = static_cast<SharedTypes::Mode>(modeNumber);
     simLinkOk_ = envelope->body["simLinkOk"].toBool();
+    SyncMissionClock(telemetry_.missionElapsedTimeSeconds, telemetry_.timeScale);
 
     timeSinceLastPacket_.restart();
     UpdateRows();
@@ -134,6 +135,7 @@ void GroundControl::UpdateLinkRow()
     if (linkLost)
         UpdateRows(true);
 
+    UpdateMissionClockRows();
     emit summaryChanged();
 }
 
@@ -148,6 +150,26 @@ void GroundControl::UpdateRows(bool stale)
     UpdateSafeModeSwitchRow(stale);
     adjustsModel_.UpdateRow(batteryAdjustRow, QString("%1 %").arg(telemetry_.batteryPercent, 0, 'f', 1), rowStatus(SharedTypes::Status::none));
     adjustsModel_.UpdateRow(timeScaleAdjustRow, QString("%1x").arg(telemetry_.timeScale), rowStatus(SharedTypes::Status::none));
+}
+
+void GroundControl::SyncMissionClock(double METSeconds, float timeScale)
+{
+    lastMETSeconds_ = METSeconds;
+    clockTimeScale_ = timeScale;
+    timeSinceMETSync_.restart();
+}
+
+double GroundControl::GetEstimatedMETSeconds() const
+{
+    return lastMETSeconds_ + timeSinceMETSync_.elapsed() / 1000.0 * clockTimeScale_;
+}
+
+void GroundControl::UpdateMissionClockRows()
+{
+    if(lastMETSeconds_ < 0.0)
+        return;
+
+    UpdateMissionClockReadouts(readoutsModel_, GetEstimatedMETSeconds(), gcHeaderRowCount, false);
 }
 
 QString GroundControl::FaultName(int faultRow)

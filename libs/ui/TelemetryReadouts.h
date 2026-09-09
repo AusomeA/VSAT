@@ -60,15 +60,23 @@ inline SharedTypes::Status GetModeStatus(SharedTypes::Mode mode)
                                                  : SharedTypes::Status::critical;
 }
 
+inline void UpdateMissionClockReadouts(ReadoutsModel &model, double METSeconds, int firstRow, bool stale)
+{
+    auto rowStatus = [stale](SharedTypes::Status status)
+    { return static_cast<int>(stale ? SharedTypes::Status::stale : status); };
+
+    const float nextContactSeconds = SecondsUntilNextContact(METSeconds);
+
+    model.UpdateRow(firstRow + METRow, MissionElapsedTimeText(METSeconds), rowStatus(SharedTypes::Status::none));
+    model.UpdateRow(firstRow + nextContactRow, nextContactSeconds > 0.f ? CountdownText(nextContactSeconds) : "In Contact", rowStatus(nextContactSeconds > 0.f ? SharedTypes::Status::none : SharedTypes::Status::good));
+}
+
 inline void UpdateTelemetryReadouts(ReadoutsModel &model, const SharedTypes::Telemetry &telemetry, int firstRow, bool stale)
 {
     auto rowStatus = [stale](SharedTypes::Status status)
     { return static_cast<int>(stale ? SharedTypes::Status::stale : status); };
 
-    const float nextContactSeconds = SecondsUntilNextContact(telemetry.missionElapsedTimeSeconds);
-
-    model.UpdateRow(firstRow + METRow, MissionElapsedTimeText(telemetry.missionElapsedTimeSeconds), rowStatus(SharedTypes::Status::none));
-    model.UpdateRow(firstRow + nextContactRow, nextContactSeconds > 0.f ? CountdownText(nextContactSeconds) : "In Contact", rowStatus(nextContactSeconds > 0.f ? SharedTypes::Status::none : SharedTypes::Status::good));
+    UpdateMissionClockReadouts(model, telemetry.missionElapsedTimeSeconds, firstRow, stale);
     model.UpdateRow(firstRow + batteryRow, QString("%1 %").arg(telemetry.batteryPercent, 0, 'f', 1), rowStatus(GetBatteryStatus(telemetry.batteryPercent)));
     model.UpdateRow(firstRow + solarGenerationRow, QString("%1 W").arg(telemetry.solarGenerationWatts, 0, 'f', 1), rowStatus(GetSolarGenerationStatus(telemetry.solarGenerationWatts, telemetry.isInSunlight)));
     model.UpdateRow(firstRow + powerConsumptionRow, QString("%1 W").arg(telemetry.powerConsumptionWatts, 0, 'f', 1), rowStatus(GetPowerConsumptionStatus(telemetry)));
