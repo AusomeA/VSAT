@@ -134,13 +134,13 @@ void SpacecraftSimulator::Update(double deltaTimeSeconds)
     else
     {
         // power consumtion calculations
-        powerConsumptionWatts_ = basePowerConsumption + avionicsPowerConsumption;
+        powerConsumptionWatts_ = SharedTypes::basePowerWatts + SharedTypes::avionicsPowerWatts;
         if (payloadEnabled_)
-            powerConsumptionWatts_ += payloadPowerConsumption;
+            powerConsumptionWatts_ += SharedTypes::payloadPowerWatts;
         if (commsTransmitting_)
-            powerConsumptionWatts_ += commsPowerConsumption;
+            powerConsumptionWatts_ += SharedTypes::commsPowerWatts;
         if (heaterEnabled_)
-            powerConsumptionWatts_ += heaterPowerConsumption;
+            powerConsumptionWatts_ += SharedTypes::heaterPowerWatts;
     }
 
     // battery calculations
@@ -364,7 +364,7 @@ void SpacecraftSimulator::UpdateReadouts()
     readoutsModel_.UpdateRow(METRow, MissionElapsedTimeText(missionElapsedTimeSeconds_), static_cast<int>(SharedTypes::Status::none));
     readoutsModel_.UpdateRow(batteryRow, QString("%1 %").arg(BatteryCalculation(), 0, 'f', 1), static_cast<int>(GetBatteryStatus(BatteryCalculation())));
     readoutsModel_.UpdateRow(solarGenerationRow, QString("%1 W").arg(solarGenerationWatts_, 0, 'f', 1), static_cast<int>(GetSolarGenerationStatus(solarGenerationWatts_, isInSunlight_)));
-    readoutsModel_.UpdateRow(powerConsumptionRow, QString("%1 W").arg(powerConsumptionWatts_, 0, 'f', 1), static_cast<int>(GetPowerConsumptionStatus(powerConsumptionWatts_)));
+    readoutsModel_.UpdateRow(powerConsumptionRow, QString("%1 W").arg(powerConsumptionWatts_, 0, 'f', 1), static_cast<int>(GetPowerConsumptionStatus(BuildTelemetry())));
     readoutsModel_.UpdateRow(temperatureRow, QString("%1 C").arg(temperatureCelsius_, 0, 'f', 1), static_cast<int>(GetTemperatureStatus(temperatureCelsius_)));
     readoutsModel_.UpdateRow(heaterRow, heaterEnabled_ ? "On" : "Off", static_cast<int>(SharedTypes::Status::none));
     readoutsModel_.UpdateRow(radiatorRow, radiatorLouversOpen_ ? "Open" : "Shut", static_cast<int>(SharedTypes::Status::none));

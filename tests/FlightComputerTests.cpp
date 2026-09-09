@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "FlightComputer.h"
 #include "TelemetryJson.h"
+#include "Helpers.h"
 
 SharedTypes::Telemetry NominalTelemetry()
 {
@@ -236,7 +237,7 @@ TEST(ModeCheck, ExitSafeModeWithInhibitorCheck)
     EXPECT_EQ(commands.mode, SharedTypes::Mode::nominal);
 }
 
-TEST(ModeCheck, RebootClearsInhibitCheck)                   
+TEST(ModeCheck, RebootClearsInhibitCheck)
 {
     FlightComputer flightComputer;
     SharedTypes::Telemetry telemetry = NominalTelemetry();
@@ -582,4 +583,24 @@ TEST(TelemetryJson, RejectsBadModeCheck)
     result = CommandsFromJson(brokenPayload);
 
     EXPECT_FALSE(result.has_value());
+}
+
+TEST(Helpers, PowerConsumptionStatusCheck)
+{
+    SharedTypes::Telemetry telemetry = NominalTelemetry();
+
+    telemetry.powerConsumptionWatts = 13.f;
+    EXPECT_EQ(GetPowerConsumptionStatus(telemetry), SharedTypes::Status::good);
+
+    telemetry.payloadEnabled = true;
+    telemetry.commsTransmitting = true;
+    telemetry.heaterEnabled = true;
+    telemetry.powerConsumptionWatts = 45.f;
+    EXPECT_EQ(GetPowerConsumptionStatus(telemetry), SharedTypes::Status::good);
+
+    telemetry.heaterEnabled = false;
+    EXPECT_EQ(GetPowerConsumptionStatus(telemetry), SharedTypes::Status::warning);
+
+    telemetry.powerConsumptionWatts = 60.f;
+    EXPECT_EQ(GetPowerConsumptionStatus(telemetry), SharedTypes::Status::critical);
 }

@@ -4,6 +4,7 @@
 #include "ReadoutsModel.h"
 #include "Helpers.h"
 #include "ReadoutFormatting.h"
+#include "Helpers.h"
 
 enum TelemetryReadoutRow
 {
@@ -66,7 +67,7 @@ inline void UpdateTelemetryReadouts(ReadoutsModel &model, const SharedTypes::Tel
     model.UpdateRow(firstRow + METRow, MissionElapsedTimeText(telemetry.missionElapsedTimeSeconds), rowStatus(SharedTypes::Status::none));
     model.UpdateRow(firstRow + batteryRow, QString("%1 %").arg(telemetry.batteryPercent, 0, 'f', 1), rowStatus(GetBatteryStatus(telemetry.batteryPercent)));
     model.UpdateRow(firstRow + solarGenerationRow, QString("%1 W").arg(telemetry.solarGenerationWatts, 0, 'f', 1), rowStatus(GetSolarGenerationStatus(telemetry.solarGenerationWatts, telemetry.isInSunlight)));
-    model.UpdateRow(firstRow + powerConsumptionRow, QString("%1 W").arg(telemetry.powerConsumptionWatts, 0, 'f', 1), rowStatus(GetPowerConsumptionStatus(telemetry.powerConsumptionWatts)));
+    model.UpdateRow(firstRow + powerConsumptionRow, QString("%1 W").arg(telemetry.powerConsumptionWatts, 0, 'f', 1), rowStatus(GetPowerConsumptionStatus(telemetry)));
     model.UpdateRow(firstRow + temperatureRow, QString("%1 C").arg(telemetry.temperatureCelsius, 0, 'f', 1), rowStatus(GetTemperatureStatus(telemetry.temperatureCelsius)));
     model.UpdateRow(firstRow + heaterRow, telemetry.heaterEnabled ? "On" : "Off", rowStatus(SharedTypes::Status::none));
     model.UpdateRow(firstRow + radiatorRow, telemetry.radiatorLouversOpen ? "Open" : "Shut", rowStatus(SharedTypes::Status::none));

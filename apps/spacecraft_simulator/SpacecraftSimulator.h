@@ -121,13 +121,6 @@ private:
 
     Discovery discovery_{SharedTypes::simulatorName, SharedTypes::defaultVehicleName};
     
-    // Power Consumption Variables
-    static constexpr float basePowerConsumption = 5.f; // how much power is consumed, even in safe mode
-    static constexpr float avionicsPowerConsumption = 8.f;
-    static constexpr float payloadPowerConsumption = 12.f;
-    static constexpr float commsPowerConsumption = 10.f;
-    static constexpr float heaterPowerConsumption = 10.f;
-    
     // Temperature Variables
     static constexpr float sunlitEquilibriumCelsius = 32.5f;    // what temp it settles in sunlight
     static constexpr float eclipseEquilibriumCelsius = -5.f;    // what temp it settles in darkness

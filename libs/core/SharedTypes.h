@@ -8,6 +8,7 @@ namespace SharedTypes
     Q_NAMESPACE
     QML_ELEMENT
 
+    // Ports
     inline constexpr quint16 simTelemetryPort = 45000;    // sim->FC
     inline constexpr quint16 simCommandPort = 45001;      // FC->sim
     inline constexpr quint16 groundTelemetryPort = 45002; // fc->gc
@@ -15,6 +16,7 @@ namespace SharedTypes
     inline constexpr quint16 godPort = 45004;             // gc->sim, god mode port for fault injection
     inline constexpr quint16 discoveryPort = 45010;       // find peers on the network
 
+    // discovery variables
     static constexpr int discoveryIntervalMilliseconds = 1000;
     inline const QString simulatorName = "spacecraft_simulator";
     inline const QString flightComputerName = "flight_computer";
@@ -25,6 +27,15 @@ namespace SharedTypes
     inline constexpr float orbitPeriodSeconds = 5400.f;
     inline constexpr float sunlitSeconds = 3000.f;
     inline constexpr float eclipseSeconds = orbitPeriodSeconds - sunlitSeconds;
+
+    // Power variables
+    inline constexpr float basePowerWatts = 5.f;
+    inline constexpr float avionicsPowerWatts = 8.f;
+    inline constexpr float payloadPowerWatts = 12.f;
+    inline constexpr float commsPowerWatts = 10.f;
+    inline constexpr float heaterPowerWatts = 10.f;
+    inline constexpr float maxPowerWatts = basePowerWatts + avionicsPowerWatts + payloadPowerWatts + commsPowerWatts + heaterPowerWatts;
+    inline constexpr float powerMarginWatts = 1.f;
 
     // payload windows
     inline constexpr float payloadStartTime = 900.f;

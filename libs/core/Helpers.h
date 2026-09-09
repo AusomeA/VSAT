@@ -29,16 +29,6 @@ inline SharedTypes::Status GetSolarGenerationStatus(float generationWatts, bool 
         return SharedTypes::Status::critical;
 }
 
-inline SharedTypes::Status GetPowerConsumptionStatus(float powerConsumptionWatts)
-{
-    if (powerConsumptionWatts < 33.75f) // if ran through entire eclipse, would break even on power consumption
-        return SharedTypes::Status::good;
-    else if (powerConsumptionWatts < 46.f) // 45 watts is everything running at once. Should not go above 45 watts and should only use 45 watts sparingly.
-        return SharedTypes::Status::warning;
-    else
-        return SharedTypes::Status::critical;
-}
-
 inline SharedTypes::Status GetTemperatureStatus(float temperatureCelsius)
 {
     if (temperatureCelsius <= maxTemperatureGoodCelsius && temperatureCelsius >= minTemperatureGoodCelsius)
@@ -47,4 +37,24 @@ inline SharedTypes::Status GetTemperatureStatus(float temperatureCelsius)
         return SharedTypes::Status::warning;
     else
         return SharedTypes::Status::critical;
+}
+
+inline float ExpectedPowerWatts(const SharedTypes::Telemetry &telemetry)
+{
+    return SharedTypes::basePowerWatts + SharedTypes::avionicsPowerWatts
+        + (telemetry.payloadEnabled ? SharedTypes::payloadPowerWatts : 0.f)
+        + (telemetry.commsTransmitting ? SharedTypes::commsPowerWatts : 0.f)
+        + (telemetry.heaterEnabled ? SharedTypes::heaterPowerWatts : 0.f);
+}
+
+inline SharedTypes::Status GetPowerConsumptionStatus(const SharedTypes::Telemetry &telemetry)
+{
+    const float excessWatts = telemetry.powerConsumptionWatts - ExpectedPowerWatts(telemetry);
+
+    if(telemetry.powerConsumptionWatts > SharedTypes::maxPowerWatts + SharedTypes::powerMarginWatts)
+        return SharedTypes::Status::critical;
+    else if(excessWatts > SharedTypes::powerMarginWatts)
+        return SharedTypes::Status::warning;
+    else
+        return SharedTypes::Status::good;
 }
