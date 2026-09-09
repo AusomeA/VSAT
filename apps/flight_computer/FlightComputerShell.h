@@ -16,6 +16,7 @@ enum FCReadoutRowIndex
 {
     linkRow,
     modeRow,
+    lastGroundContactRow,
     fcHeaderRowCount
 };
 

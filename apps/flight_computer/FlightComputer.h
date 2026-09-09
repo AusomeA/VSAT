@@ -16,8 +16,8 @@ public:
     bool SetPayloadInhibited(bool inhibited);
 
     SharedTypes::Mode GetMode() const { return mode_; }
-
     const SharedTypes::Telemetry &GetTelemetry() const { return telemetry_; }
+    double GetLastGroundContactSeconds() const { return lastGroundContactSeconds_; }
 
 private:
     SharedTypes::Mode mode_;
@@ -44,7 +44,7 @@ private:
     void CommsCheck();
     void HeaterCheck();
 
-    bool GetSensorFailed(bool healthy, const QString &faultName) const {return !healthy && !inhibitedFaults_.contains(faultName);}
+    bool GetSensorFailed(bool healthy, const QString &faultName) const { return !healthy && !inhibitedFaults_.contains(faultName); }
 
     float TimeIntoOrbit() const;
 };

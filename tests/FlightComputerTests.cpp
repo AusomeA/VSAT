@@ -607,3 +607,14 @@ TEST(Helpers, PowerConsumptionStatusCheck)
     telemetry.powerConsumptionWatts = 60.f;
     EXPECT_EQ(GetPowerConsumptionStatus(telemetry), SharedTypes::Status::critical);
 }
+
+TEST(Helpers, NextContactCheck)
+{
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(0.0), SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::commsStart - 1), 1.f);
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::commsStart), 0.f);
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::commsEnd - 1), 0.f);
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::commsEnd), SharedTypes::orbitPeriodSeconds - SharedTypes::commsEnd + SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::orbitPeriodSeconds), SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::orbitPeriodSeconds + SharedTypes::commsStart),  0.f);
+}

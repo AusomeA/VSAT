@@ -43,7 +43,7 @@ void FlightComputerShell::PopulateRows()
     readoutsModel_.SetRows(QVector<ReadoutRow>{
                                {"Link", "", 0},
                                {"Mode", "", 0},
-                           } +
+                               {"Last Ground Contact", "", 0}} +
                            TelemetryReadouts());
 }
 
@@ -53,6 +53,8 @@ void FlightComputerShell::UpdateRows(bool stale)
     const int modeStatus = static_cast<int>(stale ? SharedTypes::Status::stale : GetModeStatus(mode));
 
     readoutsModel_.UpdateRow(modeRow, ModeText(mode), modeStatus);
+    const double lastContact = flightComputer_.GetLastGroundContactSeconds();
+    readoutsModel_.UpdateRow(lastGroundContactRow, lastContact < 0.0 ? "None" : MissionElapsedTimeText(lastContact), static_cast<int>(stale ? SharedTypes::Status::stale : SharedTypes::Status::none));
     UpdateTelemetryReadouts(readoutsModel_, flightComputer_.GetTelemetry(), fcHeaderRowCount, stale);
 }
 
@@ -168,6 +170,7 @@ void FlightComputerShell::StartBoot()
     booting_ = true;
     readoutsModel_.UpdateRow(linkRow, "Booting...", static_cast<int>(SharedTypes::Status::warning));
     readoutsModel_.UpdateRow(modeRow, "Booting...", static_cast<int>(SharedTypes::Status::warning));
+    readoutsModel_.UpdateRow(lastGroundContactRow, "Booting...", static_cast<int>(SharedTypes::Status::warning));
     UpdateTelemetryReadouts(readoutsModel_, flightComputer_.GetTelemetry(), fcHeaderRowCount, true);
     bootTimer_.start(bootDurationMilliseconds);
 }

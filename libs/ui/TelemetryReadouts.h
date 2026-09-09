@@ -9,6 +9,7 @@
 enum TelemetryReadoutRow
 {
     METRow,
+    nextContactRow,
     batteryRow,
     solarGenerationRow,
     powerConsumptionRow,
@@ -29,6 +30,7 @@ inline QVector<ReadoutRow> TelemetryReadouts()
 {
     return {
         {"MET", "", 0},
+        {"Next Contact", "", 0},
         {"Battery", "", 0},
         {"Solar Generation", "", 0},
         {"Power Consumption", "", 0},
@@ -41,30 +43,32 @@ inline QVector<ReadoutRow> TelemetryReadouts()
         {"Temp Sensor OK", "", 0},
         {"Power Sensor OK", "", 0},
         {"Attitude Sensor OK", "", 0},
-        {"Payload Enabled", "", 0}
-    };
+        {"Payload Enabled", "", 0}};
 };
 
 inline QString ModeText(SharedTypes::Mode mode)
 {
-    return mode == SharedTypes::Mode::nominal  ? "Nominal"
+    return mode == SharedTypes::Mode::nominal    ? "Nominal"
            : mode == SharedTypes::Mode::degraded ? "Degraded"
                                                  : "Safe";
 }
 
 inline SharedTypes::Status GetModeStatus(SharedTypes::Mode mode)
 {
-    return mode == SharedTypes::Mode::nominal  ? SharedTypes::Status::good
+    return mode == SharedTypes::Mode::nominal    ? SharedTypes::Status::good
            : mode == SharedTypes::Mode::degraded ? SharedTypes::Status::warning
                                                  : SharedTypes::Status::critical;
 }
 
 inline void UpdateTelemetryReadouts(ReadoutsModel &model, const SharedTypes::Telemetry &telemetry, int firstRow, bool stale)
 {
-    auto rowStatus = [stale] (SharedTypes::Status status)                           // helper lambda
-    { return static_cast<int>(stale ? SharedTypes::Status::stale : status);};
-    
+    auto rowStatus = [stale](SharedTypes::Status status)
+    { return static_cast<int>(stale ? SharedTypes::Status::stale : status); };
+
+    const float nextContactSeconds = SecondsUntilNextContact(telemetry.missionElapsedTimeSeconds);
+
     model.UpdateRow(firstRow + METRow, MissionElapsedTimeText(telemetry.missionElapsedTimeSeconds), rowStatus(SharedTypes::Status::none));
+    model.UpdateRow(firstRow + nextContactRow, nextContactSeconds > 0.f ? CountdownText(nextContactSeconds) : "In Contact", rowStatus(nextContactSeconds > 0.f ? SharedTypes::Status::none : SharedTypes::Status::good));
     model.UpdateRow(firstRow + batteryRow, QString("%1 %").arg(telemetry.batteryPercent, 0, 'f', 1), rowStatus(GetBatteryStatus(telemetry.batteryPercent)));
     model.UpdateRow(firstRow + solarGenerationRow, QString("%1 W").arg(telemetry.solarGenerationWatts, 0, 'f', 1), rowStatus(GetSolarGenerationStatus(telemetry.solarGenerationWatts, telemetry.isInSunlight)));
     model.UpdateRow(firstRow + powerConsumptionRow, QString("%1 W").arg(telemetry.powerConsumptionWatts, 0, 'f', 1), rowStatus(GetPowerConsumptionStatus(telemetry)));
