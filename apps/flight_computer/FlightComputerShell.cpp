@@ -59,7 +59,7 @@ void FlightComputerShell::UpdateRows(bool stale)
 
     readoutsModel_.UpdateRow(modeRow, ModeText(mode), modeStatus);
     readoutsModel_.UpdateRow(lastGroundContactRow, 
-                            lastContact < 0.0 ? "None" : inContact ? "In Contact" : CountdownText(secondsSinceContact), 
+                            !flightComputer_.HadGroundContact() ? "No Contact Yet" : inContact ? "In Contact" : CountdownText(secondsSinceContact), 
                             static_cast<int>(stale ? SharedTypes::Status::stale : inContact ? SharedTypes::Status::good : SharedTypes::Status::none));
     UpdateTelemetryReadouts(readoutsModel_, telemetry, fcHeaderRowCount, stale);
 }

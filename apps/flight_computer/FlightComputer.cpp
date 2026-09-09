@@ -20,7 +20,10 @@ SharedTypes::Commands FlightComputer::Update(const SharedTypes::Telemetry &telem
         lastGroundContactSeconds_ = telemetry_.missionElapsedTimeSeconds;
 
     if (telemetry_.communicationsAvailable && telemetry_.commsTransmitting)
+    {
         lastGroundContactSeconds_ = telemetry_.missionElapsedTimeSeconds;
+        hadGroundContact_ = true;
+    }
 
     ModeCheck();
     PayloadCheck();

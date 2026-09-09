@@ -18,6 +18,7 @@ public:
     SharedTypes::Mode GetMode() const { return mode_; }
     const SharedTypes::Telemetry &GetTelemetry() const { return telemetry_; }
     double GetLastGroundContactSeconds() const { return lastGroundContactSeconds_; }
+    bool HadGroundContact() const { return hadGroundContact_; }
 
 private:
     SharedTypes::Mode mode_;
@@ -29,6 +30,7 @@ private:
     SharedTypes::Telemetry telemetry_;
 
     double lastGroundContactSeconds_;
+    bool hadGroundContact_ = false;
 
     bool exitSafeModeRequested_ = false;
     QSet<QString> inhibitedFaults_;
