@@ -47,6 +47,7 @@ Q_OBJECT
 
     QTimer bootTimer_;
     bool booting_ = false;
+    bool groundContact_ = false;
 
     static constexpr int linkCheckIntervalMilliseconds = 200;
     static constexpr int bootDurationMilliseconds = 5000;       // how long it takes the fc to boot

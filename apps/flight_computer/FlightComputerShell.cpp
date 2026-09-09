@@ -78,6 +78,9 @@ void FlightComputerShell::HandleGroundCommand(const QByteArray &payload, const Q
     if (booting_)
         return;
 
+    if (!flightComputer_.GetTelemetry().communicationsAvailable)
+        return;
+
     std::optional<Envelope> envelope = EnvelopeFromJson(payload);
     if (!envelope || envelope->type != SharedTypes::groundCommandMessageType)
     {
@@ -130,7 +133,17 @@ void FlightComputerShell::UpdateLinkRow()
     if (linkLost)
         UpdateRows(true);
 
-    SendGroundTelemetry(!linkLost);
+    const SharedTypes::Telemetry &telemetry = flightComputer_.GetTelemetry();
+    const bool inContact = telemetry.communicationsAvailable && telemetry.commsTransmitting;
+
+    if (inContact != groundContact_)
+    {
+        std::cout << (inContact ? "Ground contact acquired" : "Ground contact lost") << std::endl;
+        groundContact_ = inContact;
+    }
+
+    if (inContact)
+        SendGroundTelemetry(!linkLost);
 }
 
 void FlightComputerShell::SendGroundTelemetry(bool simLinkOk)
