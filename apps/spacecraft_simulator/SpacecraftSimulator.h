@@ -180,4 +180,6 @@ private:
     void HandleCommands(const QByteArray &payload);
     void HandleFaultInjection(const QByteArray &payload, const QHostAddress &senderAddress, quint16 senderPort);
     bool ApplyFaultInjection(const QString &faultName, bool active);
+
+    void UpdatePowerConsumption();
 };

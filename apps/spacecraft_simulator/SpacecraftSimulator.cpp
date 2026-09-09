@@ -129,19 +129,7 @@ void SpacecraftSimulator::Update(double deltaTimeSeconds)
     else
         solarGenerationWatts_ = 0.f;
 
-    if (blackedOut_)
-        powerConsumptionWatts_ = 0.f;
-    else
-    {
-        // power consumtion calculations
-        powerConsumptionWatts_ = SharedTypes::basePowerWatts + SharedTypes::avionicsPowerWatts;
-        if (payloadEnabled_)
-            powerConsumptionWatts_ += SharedTypes::payloadPowerWatts;
-        if (commsTransmitting_)
-            powerConsumptionWatts_ += SharedTypes::commsPowerWatts;
-        if (heaterEnabled_)
-            powerConsumptionWatts_ += SharedTypes::heaterPowerWatts;
-    }
+    UpdatePowerConsumption();
 
     // battery calculations
     float netPowerWatts = solarGenerationWatts_ - powerConsumptionWatts_;
@@ -405,6 +393,8 @@ void SpacecraftSimulator::HandleCommands(const QByteArray &payload)
     }
     SetHeater(commands->heaterEnabled);
     timeSinceLastCommand_.restart();
+    UpdatePowerConsumption();
+    UpdateReadouts();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -521,10 +511,26 @@ bool SpacecraftSimulator::ApplyFaultInjection(const QString &faultName, bool act
         cout << "Chaos mode " << (active ? "on" : "off") << endl;
         return true;
     }
-    else if (faultName == SharedTypes::batteryUpMessage) {BatteryTestUp(); return true;}
-    else if (faultName == SharedTypes::batteryDownMessage) {BatteryTestDown(); return true;}
-    else if (faultName == SharedTypes::timeScaleUpMessage) {IncreaseTimeScale(); return true;}
-    else if (faultName == SharedTypes::timeScaleDownMessage) {DecreaseTimeScale(); return true;}
+    else if (faultName == SharedTypes::batteryUpMessage)
+    {
+        BatteryTestUp();
+        return true;
+    }
+    else if (faultName == SharedTypes::batteryDownMessage)
+    {
+        BatteryTestDown();
+        return true;
+    }
+    else if (faultName == SharedTypes::timeScaleUpMessage)
+    {
+        IncreaseTimeScale();
+        return true;
+    }
+    else if (faultName == SharedTypes::timeScaleDownMessage)
+    {
+        DecreaseTimeScale();
+        return true;
+    }
     else
     {
         cout << "Rejected unknown fault injection request: " << faultName.toStdString() << endl;
@@ -533,4 +539,21 @@ bool SpacecraftSimulator::ApplyFaultInjection(const QString &faultName, bool act
 
     cout << faultName.toStdString() << " set to " << (healthy ? "healthy" : "faulty") << endl;
     return true;
+}
+
+void SpacecraftSimulator::UpdatePowerConsumption()
+{
+    if (blackedOut_)
+    {
+        powerConsumptionWatts_ = 0.f;
+        return;
+    }
+
+    powerConsumptionWatts_ = SharedTypes::basePowerWatts + SharedTypes::avionicsPowerWatts;
+    if (payloadEnabled_)
+        powerConsumptionWatts_ += SharedTypes::payloadPowerWatts;
+    if (commsTransmitting_)
+        powerConsumptionWatts_ += SharedTypes::commsPowerWatts;
+    if (heaterEnabled_)
+        powerConsumptionWatts_ += SharedTypes::heaterPowerWatts;
 }
