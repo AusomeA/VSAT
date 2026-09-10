@@ -21,9 +21,10 @@ inline QString MissionElapsedTimeText(double METSeconds)
 
 inline QString CountdownText(float seconds)
 {
-    const int totalSeconds = static_cast<int> (seconds);
+    const int totalSeconds = static_cast<int>(qAbs(seconds));
 
-    return QString("%1:%2")
+    return QString("%1%2:%3")
+        .arg(seconds < 0.f ? "-" : "")
         .arg(totalSeconds / 60, 2, 10, QChar('0'))
         .arg(totalSeconds % 60, 2, 10, QChar('0'));
 }

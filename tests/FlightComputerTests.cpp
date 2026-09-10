@@ -618,3 +618,12 @@ TEST(Helpers, NextContactCheck)
     EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::orbitPeriodSeconds), SharedTypes::commsStart);
     EXPECT_FLOAT_EQ(SecondsUntilNextContact(SharedTypes::orbitPeriodSeconds + SharedTypes::commsStart),  0.f);
 }
+
+TEST(Helpers, NextContactStartCheck)
+{
+    EXPECT_FLOAT_EQ(NextContactStartMET(0.0), SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(NextContactStartMET(SharedTypes::commsStart - 1), SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(NextContactStartMET(SharedTypes::commsStart), SharedTypes::orbitPeriodSeconds + SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(NextContactStartMET(SharedTypes::commsEnd), SharedTypes::orbitPeriodSeconds + SharedTypes::commsStart);
+    EXPECT_FLOAT_EQ(NextContactStartMET(SharedTypes::orbitPeriodSeconds * 3 + SharedTypes::commsEnd -1), SharedTypes::orbitPeriodSeconds * 4 + SharedTypes::commsStart);
+}

@@ -111,6 +111,7 @@ private:
     double lastMETSeconds_ = -1.0;
     float clockTimeScale_ = 1.f;
     QElapsedTimer timeSinceMETSync_;
+    double lastContactMETSeconds_ = 0.0;
 
     static constexpr int linkCheckIntervalMilliseconds = 200;
 

@@ -103,6 +103,7 @@ void GroundControl::HandleGroundTelemetry(const QByteArray &payload)
     mode_ = static_cast<SharedTypes::Mode>(modeNumber);
     simLinkOk_ = envelope->body["simLinkOk"].toBool();
     SyncMissionClock(telemetry_.missionElapsedTimeSeconds, telemetry_.timeScale);
+    lastContactMETSeconds_ = telemetry_.missionElapsedTimeSeconds;
 
     timeSinceLastPacket_.restart();
     UpdateRows();
@@ -200,7 +201,14 @@ void GroundControl::UpdateMissionClockRows()
     if (lastMETSeconds_ < 0.0)
         return;
 
-    UpdateMissionClockReadouts(readoutsModel_, GetEstimatedMETSeconds(), gcHeaderRowCount, false);
+    const double estimatedMETSeconds = GetEstimatedMETSeconds();
+    const double secondsOverdue = estimatedMETSeconds - NextContactStartMET(lastContactMETSeconds_);
+    const bool contactOverdue = secondsOverdue >= 0.0 && !flightComputerLinked_;
+
+    UpdateMissionClockReadouts(readoutsModel_, estimatedMETSeconds, gcHeaderRowCount, false);
+
+    if(contactOverdue)
+        readoutsModel_.UpdateRow(gcHeaderRowCount + nextContactRow, CountdownText(static_cast<float>(-secondsOverdue)), static_cast<int>(SharedTypes::Status::critical));
 }
 
 QString GroundControl::FaultName(int faultRow)

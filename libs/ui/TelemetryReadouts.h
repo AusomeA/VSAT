@@ -4,7 +4,6 @@
 #include "ReadoutsModel.h"
 #include "Helpers.h"
 #include "ReadoutFormatting.h"
-#include "Helpers.h"
 
 enum TelemetryReadoutRow
 {

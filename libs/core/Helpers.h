@@ -69,3 +69,11 @@ inline float SecondsUntilNextContact(double METSeconds)
 
     return SharedTypes::orbitPeriodSeconds - timeIntoOrbit + SharedTypes::commsStart;
 }
+
+inline double NextContactStartMET(double METSeconds)
+{
+    const double orbitStartMET = METSeconds - fmod(METSeconds, SharedTypes::orbitPeriodSeconds);
+    const double thisOrbitWindowStartMET = orbitStartMET + SharedTypes::commsStart;
+
+    return METSeconds < thisOrbitWindowStartMET ? thisOrbitWindowStartMET : thisOrbitWindowStartMET + SharedTypes::orbitPeriodSeconds;
+}
