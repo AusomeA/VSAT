@@ -47,6 +47,7 @@ ApplicationWindow {
     readonly property int baseFontSize: Math.round(rowHeight * 0.45)
     readonly property int cellPadding: Math.round(baseFontSize * 0.5)
     readonly property real labelFraction: 0.7
+    readonly property real footerLabelFraction: 0.25
 
     MouseArea {
         width: 80
@@ -73,12 +74,13 @@ ApplicationWindow {
     component ReadoutRowDelegate: RowLayout {
         id: readoutRow
         spacing: 0
+        property real labelFraction: root.labelFraction
         required property string label
         required property string value
         required property int status
 
         Rectangle {
-            Layout.preferredWidth: readoutRow.width * root.labelFraction
+            Layout.preferredWidth: readoutRow.width * readoutRow.labelFraction
             Layout.preferredHeight: rowHeight
             color: "black"
             border.color: "white"
@@ -154,6 +156,7 @@ ApplicationWindow {
 
             delegate: ReadoutRowDelegate {
                 Layout.fillWidth: true
+                labelFraction: root.footerLabelFraction
             }
         }
     }
