@@ -42,8 +42,8 @@ ApplicationWindow {
 
     color: "black"
 
-    readonly property int readoutRowCount: Math.max(1, Math.ceil(readoutRepeater.count / 2))
-    readonly property int rowHeight: Math.floor(readoutGrid.height / readoutRowCount)
+    readonly property int readoutRowCount: Math.max(1, Math.ceil(readoutRepeater.count / readoutGrid.columns))
+    readonly property int rowHeight: Math.floor(readoutGrid.height / (readoutRowCount + footerRepeater.count))
     readonly property int baseFontSize: Math.round(rowHeight * 0.45)
     readonly property int cellPadding: Math.round(baseFontSize * 0.5)
     readonly property real labelFraction: 0.7
@@ -70,72 +70,91 @@ ApplicationWindow {
         onActivated: root.visibility = root.visibility === Window.FullScreen ? Window.Windowed : Window.FullScreen
     }
 
-    Grid {
-        id: readoutGrid
+    component ReadoutRowDelegate: RowLayout {
+        id: readoutRow
+        spacing: 0
+        required property string label
+        required property string value
+        required property int status
+
+        Rectangle {
+            Layout.preferredWidth: readoutRow.width * root.labelFraction
+            Layout.preferredHeight: rowHeight
+            color: "black"
+            border.color: "white"
+            border.width: 1
+
+            Label {
+                anchors.fill: parent
+                anchors.margins: cellPadding
+                verticalAlignment: Label.AlignVCenter
+                horizontalAlignment: Label.AlignHCenter
+                elide: Text.ElideRight
+                fontSizeMode: Text.Fit
+                minimumPixelSize: 8
+
+                text: readoutRow.label
+
+                font.pixelSize: baseFontSize
+                color: "white"
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: rowHeight
+            color: "black"
+            border.color: "white"
+            border.width: 1
+
+            Label {
+                anchors.fill: parent
+                anchors.margins: cellPadding
+                verticalAlignment: Label.AlignVCenter
+                horizontalAlignment: Label.AlignHCenter
+                elide: Text.ElideRight
+                fontSizeMode: Text.Fit
+                minimumPixelSize: 8
+
+                text: readoutRow.value
+
+                font.pixelSize: baseFontSize
+                color: statusColor(readoutRow.status)
+            }
+        }
+    }
+
+    ColumnLayout {
+        id: readoutColumn
         anchors.fill: parent
         anchors.margins: 10
-        columns: 2
-        rowSpacing: 0
-        columnSpacing: 10
+        spacing: 0
+
+        Grid {
+            id: readoutGrid
+            Layout.fillWidth: true
+            Layout.preferredHeight: rowHeight * readoutRowCount
+            columns: 2
+            rowSpacing: 0
+            columnSpacing: 10
+
+            Repeater {
+                id: readoutRepeater
+                model: flightComputer.readoutsModel
+
+                delegate: ReadoutRowDelegate {
+                    // WAS: the whole inline RowLayout, now the component above
+                    width: (readoutGrid.width - readoutGrid.columnSpacing) / readoutGrid.columns
+                }
+            }
+        }
 
         Repeater {
-            id: readoutRepeater
-            model: flightComputer.readoutsModel
+            id: footerRepeater
+            model: flightComputer.footerModel
 
-            delegate: RowLayout {
-                id: readoutRow
-                width: (readoutGrid.width - readoutGrid.columnSpacing) / readoutGrid.columns
-                spacing: 0
-                required property string label
-                required property string value
-                required property int status
-
-                Rectangle {
-                    Layout.preferredWidth: readoutRow.width * root.labelFraction
-                    Layout.preferredHeight: rowHeight
-                    color: "black"
-                    border.color: "white"
-                    border.width: 1
-
-                    Label {
-                        anchors.fill: parent
-                        anchors.margins: cellPadding
-                        verticalAlignment: Label.AlignVCenter
-                        horizontalAlignment: Label.AlignHCenter
-                        elide: Text.ElideRight
-                        fontSizeMode: Text.Fit
-                        minimumPixelSize: 8
-
-                        text: readoutRow.label
-
-                        font.pixelSize: baseFontSize
-                        color: "white"
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: rowHeight
-                    color: "black"
-                    border.color: "white"
-                    border.width: 1
-
-                    Label {
-
-                        anchors.fill: parent
-                        anchors.margins: cellPadding
-                        verticalAlignment: Label.AlignVCenter
-                        horizontalAlignment: Label.AlignHCenter
-                        elide: Text.ElideRight
-                        fontSizeMode: Text.Fit
-                        minimumPixelSize: 8
-
-                        text: readoutRow.value
-
-                        font.pixelSize: baseFontSize
-                        color: statusColor(readoutRow.status)
-                    }
-                }
+            delegate: ReadoutRowDelegate {
+                Layout.fillWidth: true
             }
         }
     }

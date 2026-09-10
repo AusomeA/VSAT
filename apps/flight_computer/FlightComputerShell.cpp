@@ -45,6 +45,7 @@ void FlightComputerShell::PopulateRows()
                                {"Mode", "", 0},
                                {"Last Ground Contact", "", 0}} +
                            TelemetryReadouts());
+    footerModel_.SetRows(QVector<ReadoutRow>{{"Last Command", "None", 0}});
 }
 
 void FlightComputerShell::UpdateRows(bool stale)
@@ -97,6 +98,7 @@ void FlightComputerShell::HandleGroundCommand(const QByteArray &payload, const Q
     }
 
     const QString command = envelope->body["command"].toString();
+    const double receivedMETSeconds = flightComputer_.GetTelemetry().missionElapsedTimeSeconds;
     bool accepted = false;
 
     if (command == SharedTypes::exitSafeModeCommand)
@@ -113,6 +115,9 @@ void FlightComputerShell::HandleGroundCommand(const QByteArray &payload, const Q
         accepted = true;
 
     std::cout << "Ground command " << command.toStdString() << (accepted ? " accepted" : " rejected") << std::endl;
+    footerModel_.UpdateRow(lastCommandRow,
+                           QString("%1 %2 at %3").arg(command, accepted ? "accepted" : "rejected", MissionElapsedTimeText(receivedMETSeconds)),
+                           static_cast<int>(accepted ? SharedTypes::Status::good : SharedTypes::Status::critical));
 
     Envelope ackEnvelope;
     ackEnvelope.type = SharedTypes::ackMessageType;

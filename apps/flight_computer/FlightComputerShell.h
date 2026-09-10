@@ -20,19 +20,29 @@ enum FCReadoutRowIndex
     fcHeaderRowCount
 };
 
-class FlightComputerShell : public QObject {
-Q_OBJECT
+enum FCFooterRowIndex
+{
+    lastCommandRow,
+    fcFooterRowCount
+};
+
+class FlightComputerShell : public QObject
+{
+    Q_OBJECT
     QML_NAMED_ELEMENT(FlightComputerShell)
     Q_PROPERTY(QAbstractItemModel *readoutsModel READ ReadoutsModelPtr CONSTANT)
+    Q_PROPERTY(QAbstractItemModel *footerModel READ FooterModelPtr CONSTANT)
 
-    public:
+public:
     FlightComputerShell(QObject *parent = nullptr);
 
-    QAbstractItemModel *ReadoutsModelPtr() {return &readoutsModel_;}
+    QAbstractItemModel *ReadoutsModelPtr() { return &readoutsModel_; }
+    QAbstractItemModel *FooterModelPtr() { return &footerModel_; }
 
-    private:
+private:
     FlightComputer flightComputer_;
     ReadoutsModel readoutsModel_;
+    ReadoutsModel footerModel_;
 
     UdpReceiver receiver_;
     UdpReceiver groundCommandReceiver_;
@@ -51,13 +61,13 @@ Q_OBJECT
     bool groundContact_ = false;
 
     static constexpr int linkCheckIntervalMilliseconds = 200;
-    static constexpr int bootDurationMilliseconds = 5000;       // how long it takes the fc to boot
+    static constexpr int bootDurationMilliseconds = 5000; // how long it takes the fc to boot
 
     void HandleTelemetry(const QByteArray &payload);
     void HandleGroundCommand(const QByteArray &payload, const QHostAddress &senderAddress, quint16 senderPort);
-    void UpdateLinkRow();       
-    void SendGroundTelemetry(bool simLinkOk);                                    // Have to update seperate in case packet does not arrive
-    
+    void UpdateLinkRow();
+    void SendGroundTelemetry(bool simLinkOk); // Have to update seperate in case packet does not arrive
+
     void PopulateRows();
     void UpdateRows(bool stale = false);
 
