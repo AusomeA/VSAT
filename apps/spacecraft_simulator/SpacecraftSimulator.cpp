@@ -71,6 +71,7 @@ void SpacecraftSimulator::Start()
     isRunning_ = true;
 
     updateTimer_.start(static_cast<int>(updateIntervalSeconds_ * 1000));
+    tickTimer_.start();
     cout << "Simulation started." << endl;
     PopulateReadouts();
 }
@@ -138,6 +139,7 @@ void SpacecraftSimulator::IncreaseTimeScale()
 {
     if (timeScale_ != maxTimeScale)
     {
+        AdvanceOneTick();
         timeScale_ = min(timeScale_ * 2.0, static_cast<double>(maxTimeScale));
         cout << "Time Scale = " << timeScale_ << endl;
         emit timeScaleChanged();
@@ -150,6 +152,7 @@ void SpacecraftSimulator::DecreaseTimeScale()
 {
     if (timeScale_ != minTimeScale)
     {
+        AdvanceOneTick();
         timeScale_ = max(timeScale_ / 2.0, static_cast<double>(minTimeScale));
         cout << "Time Scale = " << timeScale_ << endl;
         emit timeScaleChanged();
@@ -160,7 +163,7 @@ void SpacecraftSimulator::DecreaseTimeScale()
 
 void SpacecraftSimulator::AdvanceOneTick()
 {
-    float simulatedSeconds = updateIntervalSeconds_ * timeScale_;
+    float simulatedSeconds = tickTimer_.restart() / 1000.f * timeScale_;
 
     while (simulatedSeconds > 0.0)
     {

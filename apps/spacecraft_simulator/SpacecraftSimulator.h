@@ -153,6 +153,7 @@ private:
     
     // Functions
     QTimer updateTimer_;
+    QElapsedTimer tickTimer_;
     QElapsedTimer timeSinceLastCommand_;
     bool inCommandFallback_;                // true when we have lost contact with the flight computer
     bool brownedOut_;                       // battery very low
