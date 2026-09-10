@@ -492,9 +492,6 @@ void GroundControl::HandleAdjustAck(qint64 sequence, bool accepted)
     const PendingAdjust adjust = pendingAdjusts_.take(sequence);
     cout << adjust.faultName.toStdString() << (accepted ? " accepted" : " rejected") << endl;
     adjustsModel_.UpdateRow(adjust.row, accepted ? "Accepted" : "Rejected", static_cast<int>(accepted ? SharedTypes::Status::good : SharedTypes::Status::critical));
-
-    if (!accepted)
-        adjustsModel_.UpdateRow(adjust.row, "Rejected", static_cast<int>(SharedTypes::Status::critical));
 }
 
 void GroundControl::HandleAdjustGaveUp(qint64 sequence)
