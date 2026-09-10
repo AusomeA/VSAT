@@ -627,3 +627,16 @@ TEST(Helpers, NextContactStartCheck)
     EXPECT_FLOAT_EQ(NextContactStartMET(SharedTypes::commsEnd), SharedTypes::orbitPeriodSeconds + SharedTypes::commsStart);
     EXPECT_FLOAT_EQ(NextContactStartMET(SharedTypes::orbitPeriodSeconds * 3 + SharedTypes::commsEnd -1), SharedTypes::orbitPeriodSeconds * 4 + SharedTypes::commsStart);
 }
+
+TEST(Helpers, ContactOverdueCheck)
+{
+    const double neverContacted = 0.0;
+    const double contactMidWindow = SharedTypes::commsStart + 100;
+
+    EXPECT_DOUBLE_EQ(SecondsContactOverdue(SharedTypes::commsStart - 1, neverContacted), 0.0);
+    EXPECT_DOUBLE_EQ(SecondsContactOverdue(SharedTypes::commsStart + 10, neverContacted), 10.f);
+    EXPECT_DOUBLE_EQ(SecondsContactOverdue(SharedTypes::orbitPeriodSeconds + 100, neverContacted), SharedTypes::orbitPeriodSeconds + 100 - SharedTypes::commsStart);
+    EXPECT_DOUBLE_EQ(SecondsContactOverdue(contactMidWindow + 5, contactMidWindow), 5.0);
+    EXPECT_DOUBLE_EQ(SecondsContactOverdue(SharedTypes::commsEnd + 1, contactMidWindow), 0.0);
+    EXPECT_DOUBLE_EQ(SecondsContactOverdue(SharedTypes::orbitPeriodSeconds + SharedTypes::commsStart + 3, contactMidWindow),  3.0);
+}

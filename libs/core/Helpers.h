@@ -77,3 +77,16 @@ inline double NextContactStartMET(double METSeconds)
 
     return METSeconds < thisOrbitWindowStartMET ? thisOrbitWindowStartMET : thisOrbitWindowStartMET + SharedTypes::orbitPeriodSeconds;
 }
+
+inline double SecondsContactOverdue(double METSeconds, double lastContactMETSeconds)
+{
+    const double missedWindowStartMET = NextContactStartMET(lastContactMETSeconds);
+
+    if(METSeconds >= missedWindowStartMET)
+        return METSeconds - missedWindowStartMET;
+
+    if(SecondsUntilNextContact(METSeconds) <= 0.f)
+        return METSeconds - lastContactMETSeconds;
+
+    return 0.0;
+}

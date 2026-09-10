@@ -198,17 +198,16 @@ double GroundControl::GetEstimatedMETSeconds() const
 
 void GroundControl::UpdateMissionClockRows()
 {
-    if (lastMETSeconds_ < 0.0)
+    if (lastMETSeconds_ < 0.0 || flightComputerLinked_)
         return;
 
     const double estimatedMETSeconds = GetEstimatedMETSeconds();
-    const double secondsOverdue = estimatedMETSeconds - NextContactStartMET(lastContactMETSeconds_);
-    const bool contactOverdue = secondsOverdue >= 0.0 && !flightComputerLinked_;
+    const double secondsOverdue = SecondsContactOverdue(estimatedMETSeconds, lastContactMETSeconds_);
 
     UpdateMissionClockReadouts(readoutsModel_, estimatedMETSeconds, gcHeaderRowCount, false);
 
-    if(contactOverdue)
-        readoutsModel_.UpdateRow(gcHeaderRowCount + nextContactRow, CountdownText(static_cast<float>(-secondsOverdue)), static_cast<int>(SharedTypes::Status::critical));
+    if(secondsOverdue > 0.0)
+        readoutsModel_.UpdateRow(static_cast<int>(gcHeaderRowCount) + nextContactRow, CountdownText(static_cast<float>(-secondsOverdue)), static_cast<int>(SharedTypes::Status::critical));
 }
 
 QString GroundControl::FaultName(int faultRow)
