@@ -43,7 +43,7 @@ ApplicationWindow {
     color: "black"
 
     readonly property int readoutRowCount: Math.max(1, Math.ceil(readoutRepeater.count / readoutGrid.columns))
-    readonly property int rowHeight: Math.floor(readoutGrid.height / (readoutRowCount + footerRepeater.count))
+    readonly property int rowHeight: Math.floor(readoutColumn.height / (readoutRowCount + footerRepeater.count))
     readonly property int baseFontSize: Math.round(rowHeight * 0.45)
     readonly property int cellPadding: Math.round(baseFontSize * 0.5)
     readonly property real labelFraction: 0.7
@@ -143,7 +143,6 @@ ApplicationWindow {
                 model: flightComputer.readoutsModel
 
                 delegate: ReadoutRowDelegate {
-                    // WAS: the whole inline RowLayout, now the component above
                     width: (readoutGrid.width - readoutGrid.columnSpacing) / readoutGrid.columns
                 }
             }
