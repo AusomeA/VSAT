@@ -52,6 +52,9 @@ SpacecraftSimulator::SpacecraftSimulator(QObject *parent)
             flightComputerAddress_ = address; });
     telemetrySendTimer_.start(telemetrySendIntervalMilliseconds);
 
+    connect(&godStatusTimer_, &QTimer::timeout, this, &SpacecraftSimulator::SendGodStatus);
+    godStatusTimer_.start(godStatusIntervalMilliseconds);
+
     const QStringList arguments = QCoreApplication::arguments();
     if (arguments.size() > 1)
     {
@@ -69,20 +72,6 @@ void SpacecraftSimulator::Start()
 
     updateTimer_.start(static_cast<int>(updateIntervalSeconds_ * 1000));
     cout << "Simulation started." << endl;
-
-    ///// Testing Variables //////
-    // missionElapsedTimeSeconds_ = 0;
-    // batteryPercentage_ = 20.f;
-    // solarGenerationWatts_ = 10.01f;
-    // powerConsumptionWatts_ = 34.9f;
-    // temperatureCelsius_ = 29.9f;
-    // isInSunlight_ = false;
-    // communicationsAvailable_ = false;
-    // temperatureSensorHealthy_ = false;
-    // powerSensorHealthy_ = false;
-    // attitudeSensorHealthy_ = false;
-    // payloadEnabled_ = false;
-
     PopulateReadouts();
 }
 
@@ -153,6 +142,7 @@ void SpacecraftSimulator::IncreaseTimeScale()
         cout << "Time Scale = " << timeScale_ << endl;
         emit timeScaleChanged();
         UpdateReadouts();
+        SendGodStatus();
     }
 }
 
@@ -164,6 +154,7 @@ void SpacecraftSimulator::DecreaseTimeScale()
         cout << "Time Scale = " << timeScale_ << endl;
         emit timeScaleChanged();
         UpdateReadouts();
+        SendGodStatus();
     }
 }
 
@@ -373,6 +364,20 @@ void SpacecraftSimulator::SendTelemetry()
         return;
 
     telemetrySocket_.writeDatagram(TelemetryToJson(BuildTelemetry()), flightComputerAddress_, SharedTypes::simTelemetryPort); // local host changes when we move to pi's
+}
+
+void SpacecraftSimulator::SendGodStatus()
+{
+    Envelope envelope;
+    envelope.type = SharedTypes::godStatusMessageType;
+    envelope.sequence = godStatusSequence_++;
+    envelope.body["timeScale"] = timeScale_;
+    envelope.body["batteryPercent"] = BatteryCalculation();
+
+    const QByteArray datagram = EnvelopeToJson(envelope);
+
+    for (const QHostAddress &address : discovery_.LivePeerAddresses(SharedTypes::groundControlName))
+        telemetrySocket_.writeDatagram(datagram, address, SharedTypes::godStatusPort);
 }
 
 void SpacecraftSimulator::HandleCommands(const QByteArray &payload)

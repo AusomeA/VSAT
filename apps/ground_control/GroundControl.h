@@ -95,6 +95,7 @@ signals:
 private:
     ReadoutsModel readoutsModel_;
     UdpReceiver telemetryReceiver_;
+    UdpReceiver godStatusReceiver_;
 
     Discovery discovery_{SharedTypes::groundControlName, SharedTypes::defaultVehicleName};
 
@@ -147,11 +148,13 @@ private:
     bool rebootInProgress_ = false;
 
     void HandleGroundTelemetry(const QByteArray &payload);
+    void HandleGodStatus(const QByteArray &payload);
     void UpdateLinkRow();
     void PopulateRows();
     void UpdateRows(bool stale = false);
 
     void SyncMissionClock(double METSeconds, float timeScale);
+    void SetClockTimeScale(float timeScale);
     double GetEstimatedMETSeconds() const;
     void UpdateMissionClockRows();
 

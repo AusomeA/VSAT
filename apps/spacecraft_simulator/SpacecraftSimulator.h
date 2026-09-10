@@ -116,6 +116,8 @@ private:
     QHash<QString, LastAck> lastAcks_;
 
     QTimer telemetrySendTimer_;
+    QTimer godStatusTimer_;
+    qint64 godStatusSequence_ = 0;
     
     ReadoutsModel readoutsModel_;
 
@@ -130,6 +132,7 @@ private:
 
     // Networking Variables
     static constexpr int telemetrySendIntervalMilliseconds = 200; // 5Hz, subject to change
+    static constexpr int godStatusIntervalMilliseconds = 1000;    // for god mode battery updater
     
     // Time Scale Variables
     static constexpr float minTimeScale = .5f;
@@ -176,6 +179,7 @@ private:
     void UpdateReadouts();
 
     void SendTelemetry();
+    void SendGodStatus();
 
     void HandleCommands(const QByteArray &payload);
     void HandleFaultInjection(const QByteArray &payload, const QHostAddress &senderAddress, quint16 senderPort);

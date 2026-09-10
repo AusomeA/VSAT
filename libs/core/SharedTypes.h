@@ -14,6 +14,7 @@ namespace SharedTypes
     inline constexpr quint16 groundTelemetryPort = 45002; // fc->gc
     inline constexpr quint16 groundCommandPort = 45003;   // gc->fc
     inline constexpr quint16 godPort = 45004;             // gc->sim, god mode port for fault injection
+    inline constexpr quint16 godStatusPort = 45005;       // sim->gc, god mode sending back statuses only
     inline constexpr quint16 discoveryPort = 45010;       // find peers on the network
 
     // discovery variables
@@ -63,6 +64,8 @@ namespace SharedTypes
     inline const QString faultInjectionMessageType = "faultInjection";
     inline const QString groundCommandMessageType = "groundCommand";
     inline const QString ackMessageType = "ack";
+    inline const QString godStatusMessageType = "godStatus";
+    inline const QStringList requiredGodStatusKeys = {"timeScale", "batteryPercent"};
 
     // fault messages
     inline const QString temperatureSensorFaultMessage = "temperatureSensorFault";

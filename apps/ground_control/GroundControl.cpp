@@ -7,10 +7,12 @@ using namespace std;
 
 GroundControl::GroundControl(QObject *parent)
     : QObject(parent),
-      telemetryReceiver_(SharedTypes::groundTelemetryPort)
+      telemetryReceiver_(SharedTypes::groundTelemetryPort),
+      godStatusReceiver_(SharedTypes::godStatusPort)
 {
     PopulateRows();
     connect(&telemetryReceiver_, &UdpReceiver::DatagramReceived, this, &GroundControl::HandleGroundTelemetry);
+    connect(&godStatusReceiver_, &UdpReceiver::DatagramReceived, this, &GroundControl::HandleGodStatus);
 
     connect(&linkCheckTimer_, &QTimer::timeout, this, &GroundControl::UpdateLinkRow);
     linkCheckTimer_.start(linkCheckIntervalMilliseconds);
@@ -49,6 +51,8 @@ GroundControl::GroundControl(QObject *parent)
                 {
                     simulatorDiscovered_ = true;
                     cout << "Simulator discovered" << endl;
+                    if ( lastMETSeconds_ < 0.0)
+                        SyncMissionClock(0.0, clockTimeScale_);
                     for(int row = 0; row < faultRowCount; ++row)
                         faultsModel_.UpdateRow(row, "Off", static_cast<int> (SharedTypes::Status::none)); 
                     
@@ -105,6 +109,24 @@ void GroundControl::HandleGroundTelemetry(const QByteArray &payload)
     emit summaryChanged();
 }
 
+void GroundControl::HandleGodStatus(const QByteArray &payload)
+{
+    std::optional<Envelope> envelope = EnvelopeFromJson(payload);
+    if (!envelope || envelope->type != SharedTypes::godStatusMessageType || !HasAllKeys(envelope->body, SharedTypes::requiredGodStatusKeys))
+    {
+        qWarning() << "Dropped malformed god status packet";
+        return;
+    }
+
+    const float timeScale = static_cast<float>(envelope->body["timeScale"].toDouble());
+    const float batteryPercent = static_cast<float>(envelope->body["batteryPercent"].toDouble());
+
+    SetClockTimeScale(timeScale);
+    adjustsModel_.UpdateRow(batteryAdjustRow, QString("%1 %").arg(batteryPercent, 0, 'f', 1), static_cast<int>(SharedTypes::Status::none));
+    adjustsModel_.UpdateRow(timeScaleAdjustRow, QString("%1x").arg(timeScale), static_cast<int>(SharedTypes::Status::none));
+    UpdateMissionClockRows();
+}
+
 void GroundControl::UpdateLinkRow()
 {
     const bool neverHeard = !timeSinceLastPacket_.isValid();
@@ -148,8 +170,6 @@ void GroundControl::UpdateRows(bool stale)
     readoutsModel_.UpdateRow(modeRow, ModeText(mode_), rowStatus(GetModeStatus(mode_)));
     UpdateTelemetryReadouts(readoutsModel_, telemetry_, gcHeaderRowCount, stale);
     UpdateSafeModeSwitchRow(stale);
-    adjustsModel_.UpdateRow(batteryAdjustRow, QString("%1 %").arg(telemetry_.batteryPercent, 0, 'f', 1), rowStatus(SharedTypes::Status::none));
-    adjustsModel_.UpdateRow(timeScaleAdjustRow, QString("%1x").arg(telemetry_.timeScale), rowStatus(SharedTypes::Status::none));
 }
 
 void GroundControl::SyncMissionClock(double METSeconds, float timeScale)
@@ -159,6 +179,17 @@ void GroundControl::SyncMissionClock(double METSeconds, float timeScale)
     timeSinceMETSync_.restart();
 }
 
+void GroundControl::SetClockTimeScale(float timeScale)
+{
+    if (lastMETSeconds_ >= 0.0)
+    {
+        lastMETSeconds_ = GetEstimatedMETSeconds();
+        timeSinceMETSync_.restart();
+    }
+
+    clockTimeScale_ = timeScale;
+}
+
 double GroundControl::GetEstimatedMETSeconds() const
 {
     return lastMETSeconds_ + timeSinceMETSync_.elapsed() / 1000.0 * clockTimeScale_;
@@ -166,7 +197,7 @@ double GroundControl::GetEstimatedMETSeconds() const
 
 void GroundControl::UpdateMissionClockRows()
 {
-    if(lastMETSeconds_ < 0.0)
+    if (lastMETSeconds_ < 0.0)
         return;
 
     UpdateMissionClockReadouts(readoutsModel_, GetEstimatedMETSeconds(), gcHeaderRowCount, false);
@@ -455,7 +486,7 @@ void GroundControl::HandleAdjustAck(qint64 sequence, bool accepted)
     cout << adjust.faultName.toStdString() << (accepted ? " accepted" : " rejected") << endl;
     adjustsModel_.UpdateRow(adjust.row, accepted ? "Accepted" : "Rejected", static_cast<int>(accepted ? SharedTypes::Status::good : SharedTypes::Status::critical));
 
-    if(!accepted)
+    if (!accepted)
         adjustsModel_.UpdateRow(adjust.row, "Rejected", static_cast<int>(SharedTypes::Status::critical));
 }
 
@@ -501,7 +532,7 @@ void GroundControl::HandleCommandSwitchAck(qint64 sequence, bool accepted)
 
 void GroundControl::HandleCommandSwitchGaveUp(qint64 sequence)
 {
-    if(!pendingCommandSwitches_.contains(sequence))
+    if (!pendingCommandSwitches_.contains(sequence))
         return;
 
     const PendingFault commandSwitch = pendingCommandSwitches_.take(sequence);
@@ -512,8 +543,8 @@ void GroundControl::HandleCommandSwitchGaveUp(qint64 sequence)
 
 bool GroundControl::SwitchPending(int switchRow) const
 {
-    for(const PendingFault &pending : pendingCommandSwitches_)
-        if(pending.row == switchRow)
+    for (const PendingFault &pending : pendingCommandSwitches_)
+        if (pending.row == switchRow)
             return true;
 
     return false;
@@ -521,14 +552,14 @@ bool GroundControl::SwitchPending(int switchRow) const
 
 void GroundControl::UpdateSafeModeSwitchRow(bool stale)
 {
-    if(SwitchPending(safeModeRow))
+    if (SwitchPending(safeModeRow))
         return;
 
     const bool inSafeMode = mode_ == SharedTypes::Mode::safe;
     const QString suffix = switchOutcomeSuffix_.value(safeModeRow);
-    SharedTypes::Status status = stale ? SharedTypes::Status::stale
-                                : !suffix.isEmpty() ? SharedTypes::Status::critical
-                                : inSafeMode ? SharedTypes::Status::warning
-                                        : SharedTypes::Status::none;
-    commandsSwitchesModel_.UpdateRow(safeModeRow, (inSafeMode ? "On" : "Off") + suffix, static_cast<int>(status)); 
+    SharedTypes::Status status = stale               ? SharedTypes::Status::stale
+                                 : !suffix.isEmpty() ? SharedTypes::Status::critical
+                                 : inSafeMode        ? SharedTypes::Status::warning
+                                                     : SharedTypes::Status::none;
+    commandsSwitchesModel_.UpdateRow(safeModeRow, (inSafeMode ? "On" : "Off") + suffix, static_cast<int>(status));
 }
